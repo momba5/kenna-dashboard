@@ -38,7 +38,8 @@ const AGENTS = [
     deals_pending: 1,
     deals_pending_value: 405000,
     deals_listed: 3,
-    commission: 330472
+    commission: 330472,
+    stl: { never_called: 15, never_responded: 49, responds_text: 13, responds_email: 7, lender_sent: 1, relationship_leads: 14 }
   },
   {
     name: "Felicia Carter",
@@ -63,7 +64,8 @@ const AGENTS = [
     deals_pending: 0,
     deals_pending_value: 0,
     deals_listed: 0,
-    commission: 0
+    commission: 0,
+    stl: { never_called: 89, never_responded: 274, responds_text: 63, responds_email: 9, lender_sent: 8, relationship_leads: 8 }
   },
   {
     name: "Tahverle and Beverly Agent Team",
@@ -88,7 +90,8 @@ const AGENTS = [
     deals_pending: 0,
     deals_pending_value: 0,
     deals_listed: 0,
-    commission: 462796
+    commission: 462796,
+    stl: { never_called: 28, never_responded: 230, responds_text: 97, responds_email: 6, lender_sent: 20, relationship_leads: 9 }
   },
   {
     name: "Rona Lynn",
@@ -113,7 +116,8 @@ const AGENTS = [
     deals_pending: 2,
     deals_pending_value: 1524000,
     deals_listed: 0,
-    commission: 67648
+    commission: 67648,
+    stl: { never_called: 58, never_responded: 290, responds_text: 53, responds_email: 3, lender_sent: 10, relationship_leads: 5 }
   },
   {
     name: "Lindsey Jenkins",
@@ -138,7 +142,8 @@ const AGENTS = [
     deals_pending: 0,
     deals_pending_value: 0,
     deals_listed: 2,
-    commission: 138569
+    commission: 138569,
+    stl: { never_called: 20, never_responded: 155, responds_text: 73, responds_email: 11, lender_sent: 23, relationship_leads: 20 }
   },
   {
     name: "Brenna Lodge",
@@ -163,7 +168,8 @@ const AGENTS = [
     deals_pending: 0,
     deals_pending_value: 0,
     deals_listed: 0,
-    commission: 0
+    commission: 0,
+    stl: { never_called: 25, never_responded: 124, responds_text: 11, responds_email: 5, lender_sent: 2, relationship_leads: 39 }
   },
   {
     name: "Daniela Draper",
@@ -188,7 +194,8 @@ const AGENTS = [
     deals_pending: 1,
     deals_pending_value: 320000,
     deals_listed: 0,
-    commission: 8960
+    commission: 8960,
+    stl: { never_called: 39, never_responded: 136, responds_text: 32, responds_email: 6, lender_sent: 7, relationship_leads: 2 }
   },
   {
     name: "Tommy Reed",
@@ -213,7 +220,8 @@ const AGENTS = [
     deals_pending: 0,
     deals_pending_value: 0,
     deals_listed: 0,
-    commission: 0
+    commission: 0,
+    stl: { never_called: 102, never_responded: 375, responds_text: 161, responds_email: 19, lender_sent: 16, relationship_leads: 8 }
   },
   {
     name: "Henry Chu",
@@ -238,7 +246,8 @@ const AGENTS = [
     deals_pending: 0,
     deals_pending_value: 0,
     deals_listed: 0,
-    commission: 16940
+    commission: 16940,
+    stl: { never_called: 4, never_responded: 37, responds_text: 6, responds_email: 3, lender_sent: 1, relationship_leads: 24 }
   },
   {
     name: "James Locus",
@@ -263,7 +272,8 @@ const AGENTS = [
     deals_pending: 0,
     deals_pending_value: 0,
     deals_listed: 0,
-    commission: 32018
+    commission: 32018,
+    stl: { never_called: 0, never_responded: 33, responds_text: 9, responds_email: 3, lender_sent: 0, relationship_leads: 2 }
   },
   {
     name: "Jack Lang",
@@ -288,7 +298,8 @@ const AGENTS = [
     deals_pending: 0,
     deals_pending_value: 0,
     deals_listed: 0,
-    commission: 0
+    commission: 0,
+    stl: { never_called: 0, never_responded: 0, responds_text: 0, responds_email: 0, lender_sent: 0, relationship_leads: 0 }
   },
   {
     name: "Damon L. Chavez",
@@ -314,7 +325,8 @@ const AGENTS = [
     deals_pending: 0,
     deals_pending_value: 0,
     deals_listed: 0,
-    commission: 0
+    commission: 0,
+    stl: { never_called: 10, never_responded: 9, responds_text: 1, responds_email: 0, lender_sent: 0, relationship_leads: 0 }
   }
 ];
 
@@ -686,10 +698,17 @@ function renderOneAgentCard(agent, colorIdx) {
   strengths.forEach(s => { strengthsHtml += `<li>${s}</li>`; });
   strengthsHtml += `</ul></div>
     <div class="coaching-section">
+      <img src="img/frog-peek.jpg" alt="" class="coaching-frog">
       <div class="coaching-title blue"><span class="icon">💡</span> Where Brian Can Help</div>
       <ul class="coaching-list blue">`;
   coaching.forEach(c => { strengthsHtml += `<li>${c}</li>`; });
   strengthsHtml += `</ul></div></div>`;
+
+  // Speed-to-lead chips
+  const stlHtml = renderSTLChips(agent);
+
+  // Achievement badges
+  const badgesHtml = renderBadges(agent);
 
   // New agent badge
   let newBadge = "";
@@ -709,7 +728,9 @@ function renderOneAgentCard(agent, colorIdx) {
       <div class="agent-metrics">${metricsHtml}</div>
       ${phoneHtml}
       ${stageBarHtml}
+      ${stlHtml}
       ${strengthsHtml}
+      ${badgesHtml}
     </div>
   `;
 }
@@ -983,6 +1004,120 @@ function renderCoachingPriorities() {
   `;
 }
 
+function renderPathToClose() {
+  return `
+    <hr class="section-divider">
+    <div id="path-to-close" class="section-header">
+      <h2 class="section-title">Path to Close — What the Data Says Works</h2>
+      <p class="section-subtitle">Based on 61 closed deals and 5,345 leads since migration</p>
+    </div>
+    <div class="ptc-grid">
+      <div class="ptc-card">
+        <div class="ptc-card-title">Relationship Leads Close</div>
+        <div class="ptc-big-stat text-teal">8.6% <span style="font-size:16px;color:var(--text-muted)">close rate</span></div>
+        <div class="ptc-big-label">Sphere leads vs <strong style="color:var(--text)">0.03%</strong> for Google Organic</div>
+        <div class="ptc-bullet">6 of 14 post-migration closings came from Sphere/Referral sources</div>
+        <div class="ptc-bullet">Leads from personal relationships are 280x more likely to close than online leads</div>
+      </div>
+      <div class="ptc-card border-blue">
+        <div class="ptc-card-title">Making Contact Matters</div>
+        <div class="ptc-big-stat text-blue">4x</div>
+        <div class="ptc-big-label">Reached leads are 4x more likely to close</div>
+        <div class="ptc-bullet">Team average: 38% of leads reached — room to grow</div>
+        <div class="ptc-bullet">1,218 leads have never been called at all</div>
+      </div>
+      <div class="ptc-card border-orange">
+        <div class="ptc-card-title">Speed &amp; Persistence Win</div>
+        <div class="ptc-big-stat text-orange">23%</div>
+        <div class="ptc-big-label">of leads tagged "First Call Never Made"</div>
+        <div class="ptc-bullet">Leads contacted within 5 minutes convert 21x better (industry benchmark)</div>
+        <div class="ptc-bullet">Current median first call: 10+ days after lead creation</div>
+      </div>
+    </div>
+  `;
+}
+
+function computeBadges(agent) {
+  const badges = [];
+  const s = agent.stl;
+  const isISA = agent.roleType === "isa";
+  const isTeamLeader = agent.roleType === "team-leader";
+  const pipeline = getPipeline(agent);
+  const stageTotal = Object.values(agent.stages).reduce((a, b) => a + b, 0);
+  const nurtureCount = agent.stages.Nurture || 0;
+  const neverCalledPct = agent.clean_leads > 0 ? (s.never_called / agent.clean_leads) * 100 : 0;
+  const responseRate = agent.clean_leads > 0 ? ((s.responds_text + s.responds_email) / agent.clean_leads) * 100 : 0;
+  const pipelinePct = agent.clean_leads > 0 ? (pipeline / agent.clean_leads) * 100 : 0;
+  const nurturePct = stageTotal > 0 ? (nurtureCount / stageTotal) * 100 : 0;
+
+  // ISA gets different badges
+  if (isISA) {
+    if (agent.calls_outbound_90d >= 500) badges.push({ name: "Phone Warrior", color: "#ffd700" });
+    // Leads moved past Attempted: total - Attempted - New - Archives
+    const attempted = agent.stages.Attempted || 0;
+    const newLeads = agent.stages.New || 0;
+    const archives = agent.stages.Archives || 0;
+    const movedPast = agent.clean_leads - attempted - newLeads - archives;
+    const movedPastPct = agent.clean_leads > 0 ? (movedPast / agent.clean_leads) * 100 : 0;
+    if (movedPastPct >= 10) badges.push({ name: "Lead Warmer", color: "#c0c0c0" });
+    return badges;
+  }
+
+  // Bronze badges
+  if (agent.reached_pct >= 35) badges.push({ name: "Prospector", color: "#cd7f32" });
+  if (agent.calls_outbound_90d >= 100) badges.push({ name: "Speed Dial", color: "#cd7f32" });
+
+  // Silver badges
+  if (responseRate >= 12) badges.push({ name: "Conversation Starter", color: "#c0c0c0" });
+  if (pipelinePct >= 5) badges.push({ name: "Pipeline Builder", color: "#c0c0c0" });
+  if (neverCalledPct <= 5) badges.push({ name: "First Responder", color: "#c0c0c0" });
+  if (nurturePct >= 20) badges.push({ name: "Mover", color: "#c0c0c0" });
+
+  // Gold badges
+  if (s.lender_sent >= 3) badges.push({ name: "Finance Ready", color: "#ffd700" });
+  if (agent.deals_closed >= 1) badges.push({ name: "Closer", color: "#ffd700" });
+
+  // Platinum badges
+  if (agent.deals_closed >= 5 && s.relationship_leads >= 5) badges.push({ name: "Rainmaker", color: "#e5e4e2" });
+  if (isTeamLeader) badges.push({ name: "Team Leader", color: "#e5e4e2" });
+
+  return badges;
+}
+
+function renderBadges(agent) {
+  const badges = computeBadges(agent);
+  if (badges.length === 0) return '';
+  let html = `<div class="badges-section"><div class="badges-title">Achievement Badges</div><div class="badges-row">`;
+  badges.forEach(b => {
+    html += `<span class="badge-pill" style="background:${b.color}"><img src="img/frog-head.jpg" class="badge-icon" alt=""> ${b.name}</span>`;
+  });
+  html += `</div></div>`;
+  return html;
+}
+
+function renderSTLChips(agent) {
+  const s = agent.stl;
+  if (!s) return '';
+  const neverCalledPct = agent.clean_leads > 0 ? (s.never_called / agent.clean_leads) * 100 : 0;
+  const ncClass = neverCalledPct > 10 ? 'chip-red' : '';
+  const rtClass = s.responds_text > 0 ? 'chip-green' : '';
+  const reClass = s.responds_email > 0 ? 'chip-green' : '';
+  const lsClass = s.lender_sent > 0 ? 'chip-teal' : '';
+
+  return `
+    <div class="stl-section">
+      <div class="stl-title">Speed-to-Lead Signals</div>
+      <div class="stl-chips">
+        <span class="stl-chip ${ncClass}">Never Called: <strong>${s.never_called}</strong></span>
+        <span class="stl-chip">Never Responded: <strong>${s.never_responded}</strong></span>
+        <span class="stl-chip ${rtClass}">Responds to Text: <strong>${s.responds_text}</strong></span>
+        <span class="stl-chip ${reClass}">Responds to Email: <strong>${s.responds_email}</strong></span>
+        <span class="stl-chip ${lsClass}">Sent to Lender: <strong>${s.lender_sent}</strong></span>
+      </div>
+    </div>
+  `;
+}
+
 function renderFooter() {
   return `
     <footer class="footer">
@@ -1001,6 +1136,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="container">
       ${renderTeamOverview()}
       ${renderFunnelChart()}
+      ${renderPathToClose()}
       ${renderAgentCards()}
       ${renderLeadSources()}
       ${renderCoachingPriorities()}
