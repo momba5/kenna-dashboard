@@ -514,6 +514,9 @@ function initFunnelChart() {
           }
         }
       },
+      layout: {
+        padding: { left: 20 }
+      },
       scales: {
         x: {
           grid: { color: "rgba(45,47,69,0.5)" },
@@ -521,7 +524,7 @@ function initFunnelChart() {
         },
         y: {
           grid: { display: false },
-          ticks: { color: "#e2e8f0", font: { size: 13, family: "Inter", weight: 600 } }
+          ticks: { color: "#e2e8f0", font: { size: 13, family: "Inter", weight: 600 }, padding: 8 }
         }
       }
     }
