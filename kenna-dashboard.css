@@ -830,15 +830,16 @@ body {
 .badge-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  height: 24px;
-  padding: 0 10px;
-  border-radius: 12px;
-  font-size: 11px;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 18px;
+  font-size: 13px;
   font-weight: 600;
   color: #1a1b2e;
   white-space: nowrap;
   transition: box-shadow 0.2s;
+  margin: 4px 6px 4px 0;
 }
 
 .badge-pill:hover {
@@ -846,8 +847,8 @@ body {
 }
 
 .badge-icon {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;

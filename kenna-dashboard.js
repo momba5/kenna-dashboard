@@ -698,7 +698,7 @@ function renderOneAgentCard(agent, colorIdx) {
   strengths.forEach(s => { strengthsHtml += `<li>${s}</li>`; });
   strengthsHtml += `</ul></div>
     <div class="coaching-section">
-      <img src="img/frog-peek.jpg" alt="" class="coaching-frog">
+      <img src="img/frog-peek.png" alt="" class="coaching-frog">
       <div class="coaching-title blue"><span class="icon">💡</span> Where Brian Can Help</div>
       <ul class="coaching-list blue">`;
   coaching.forEach(c => { strengthsHtml += `<li>${c}</li>`; });
@@ -1089,7 +1089,7 @@ function renderBadges(agent) {
   if (badges.length === 0) return '';
   let html = `<div class="badges-section"><div class="badges-title">Achievement Badges</div><div class="badges-row">`;
   badges.forEach(b => {
-    html += `<span class="badge-pill" style="background:${b.color}"><img src="img/frog-head.jpg" class="badge-icon" alt=""> ${b.name}</span>`;
+    html += `<span class="badge-pill" style="background:${b.color}"><img src="img/frog-head.png" class="badge-icon" alt=""> ${b.name}</span>`;
   });
   html += `</div></div>`;
   return html;
@@ -1122,7 +1122,6 @@ function renderFooter() {
   return `
     <footer class="footer">
       <div><a href="https://yourbrand.io">Prepared by YourBrand.io</a></div>
-      <div class="footer-pplx"><a href="https://www.perplexity.ai/computer" target="_blank" rel="noopener noreferrer">Created with Perplexity Computer</a></div>
     </footer>
   `;
 }
