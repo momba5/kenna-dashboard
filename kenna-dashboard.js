@@ -627,60 +627,60 @@ function renderAgentCards() {
       <div class="badge-legend-grid">
         <!-- Bronze tier -->
         <div class="badge-legend-item">
-          <span class="badge-pill" style="background:#cd7f32"><img src="img/badge-icon.png" class="badge-icon"> Prospector</span>
+          <span class="badge-pill" style="background:#cd7f32"><img src="https://yourbrand.io/wp-content/uploads/2026/03/achievement-2.png" class="badge-icon"> Prospector</span>
           <span class="badge-desc">Reached 35%+ of assigned leads</span>
         </div>
         <div class="badge-legend-item">
-          <span class="badge-pill" style="background:#cd7f32"><img src="img/badge-icon.png" class="badge-icon"> Speed Dial</span>
+          <span class="badge-pill" style="background:#cd7f32"><img src="https://yourbrand.io/wp-content/uploads/2026/03/achievement-2.png" class="badge-icon"> Speed Dial</span>
           <span class="badge-desc">100+ outbound calls in 90 days</span>
         </div>
         <!-- Silver tier -->
         <div class="badge-legend-item">
-          <span class="badge-pill" style="background:#c0c0c0"><img src="img/badge-icon.png" class="badge-icon"> Conversation Starter</span>
+          <span class="badge-pill" style="background:#c0c0c0"><img src="https://yourbrand.io/wp-content/uploads/2026/03/achievement-2.png" class="badge-icon"> Conversation Starter</span>
           <span class="badge-desc">12%+ of leads respond to text or email</span>
         </div>
         <div class="badge-legend-item">
-          <span class="badge-pill" style="background:#c0c0c0"><img src="img/badge-icon.png" class="badge-icon"> Pipeline Builder</span>
+          <span class="badge-pill" style="background:#c0c0c0"><img src="https://yourbrand.io/wp-content/uploads/2026/03/achievement-2.png" class="badge-icon"> Pipeline Builder</span>
           <span class="badge-desc">5%+ of leads in Warm/Hot/Pending stages</span>
         </div>
         <div class="badge-legend-item">
-          <span class="badge-pill" style="background:#c0c0c0"><img src="img/badge-icon.png" class="badge-icon"> First Responder</span>
+          <span class="badge-pill" style="background:#c0c0c0"><img src="https://yourbrand.io/wp-content/uploads/2026/03/achievement-2.png" class="badge-icon"> First Responder</span>
           <span class="badge-desc">Under 5% of leads tagged "Never Called"</span>
         </div>
         <div class="badge-legend-item">
-          <span class="badge-pill" style="background:#c0c0c0"><img src="img/badge-icon.png" class="badge-icon"> Mover</span>
+          <span class="badge-pill" style="background:#c0c0c0"><img src="https://yourbrand.io/wp-content/uploads/2026/03/achievement-2.png" class="badge-icon"> Mover</span>
           <span class="badge-desc">20%+ of leads advanced to Nurture or beyond</span>
         </div>
         <!-- Gold tier -->
         <div class="badge-legend-item">
-          <span class="badge-pill" style="background:#ffd700"><img src="img/badge-icon.png" class="badge-icon"> Finance Ready</span>
+          <span class="badge-pill" style="background:#ffd700"><img src="https://yourbrand.io/wp-content/uploads/2026/03/achievement-2.png" class="badge-icon"> Finance Ready</span>
           <span class="badge-desc">3+ leads sent to lender</span>
         </div>
         <div class="badge-legend-item">
-          <span class="badge-pill" style="background:#ffd700"><img src="img/badge-icon.png" class="badge-icon"> Closer</span>
+          <span class="badge-pill" style="background:#ffd700"><img src="https://yourbrand.io/wp-content/uploads/2026/03/achievement-2.png" class="badge-icon"> Closer</span>
           <span class="badge-desc">Closed at least 1 deal</span>
         </div>
         <!-- Platinum tier -->
         <div class="badge-legend-item">
-          <span class="badge-pill" style="background:#e5e4e2"><img src="img/badge-icon.png" class="badge-icon"> Rainmaker</span>
+          <span class="badge-pill" style="background:#e5e4e2"><img src="https://yourbrand.io/wp-content/uploads/2026/03/achievement-2.png" class="badge-icon"> Rainmaker</span>
           <span class="badge-desc">5+ closings AND 5+ relationship leads</span>
         </div>
         <div class="badge-legend-item">
-          <span class="badge-pill" style="background:#e5e4e2"><img src="img/badge-icon.png" class="badge-icon"> Team Leader</span>
+          <span class="badge-pill" style="background:#e5e4e2"><img src="https://yourbrand.io/wp-content/uploads/2026/03/achievement-2.png" class="badge-icon"> Team Leader</span>
           <span class="badge-desc">Leads and coaches the team</span>
         </div>
         <!-- ISA badges -->
         <div class="badge-legend-item">
-          <span class="badge-pill" style="background:#ffd700"><img src="img/badge-icon.png" class="badge-icon"> Phone Warrior</span>
+          <span class="badge-pill" style="background:#ffd700"><img src="https://yourbrand.io/wp-content/uploads/2026/03/achievement-2.png" class="badge-icon"> Phone Warrior</span>
           <span class="badge-desc">ISA: 500+ outbound calls in 90 days</span>
         </div>
         <div class="badge-legend-item">
-          <span class="badge-pill" style="background:#c0c0c0"><img src="img/badge-icon.png" class="badge-icon"> Lead Warmer</span>
+          <span class="badge-pill" style="background:#c0c0c0"><img src="https://yourbrand.io/wp-content/uploads/2026/03/achievement-2.png" class="badge-icon"> Lead Warmer</span>
           <span class="badge-desc">ISA: Advancing leads past Attempted stage</span>
         </div>
         <!-- Special -->
         <div class="badge-legend-item">
-          <span class="badge-pill" style="background:linear-gradient(135deg, #f87171, #fbbf24)"><img src="img/badge-icon.png" class="badge-icon"> 🥩 Steak Dinner Winner</span>
+          <span class="badge-pill" style="background:linear-gradient(135deg, #f87171, #fbbf24)"><img src="https://yourbrand.io/wp-content/uploads/2026/03/achievement-2.png" class="badge-icon"> 🥩 Steak Dinner Winner</span>
           <span class="badge-desc">TBD — Brian's special award. Stay tuned.</span>
         </div>
       </div>
@@ -827,7 +827,7 @@ function renderOneAgentCard(agent, colorIdx) {
   strengths.forEach(s => { strengthsHtml += `<li>${s}</li>`; });
   strengthsHtml += `</ul></div>
     <div class="coaching-section">
-      <img src="img/frog-peek.png" alt="" class="coaching-frog">
+      <img src="https://yourbrand.io/wp-content/uploads/2026/03/kenna-frog-CTA.png" alt="" class="coaching-frog">
       <div class="coaching-title blue"><span class="icon">💡</span> Where Brian Can Help</div>
       <ul class="coaching-list blue">`;
   coaching.forEach(c => { strengthsHtml += `<li>${c}</li>`; });
@@ -1218,7 +1218,7 @@ function renderBadges(agent) {
   if (badges.length === 0) return '';
   let html = `<div class="badges-section"><div class="badges-title">Achievement Badges</div><div class="badges-row">`;
   badges.forEach(b => {
-    html += `<span class="badge-pill" style="background:${b.color}"><img src="img/badge-icon.png" class="badge-icon" alt=""> ${b.name}</span>`;
+    html += `<span class="badge-pill" style="background:${b.color}"><img src="https://yourbrand.io/wp-content/uploads/2026/03/achievement-2.png" class="badge-icon" alt=""> ${b.name}</span>`;
   });
   html += `</div></div>`;
   return html;
@@ -1508,7 +1508,7 @@ function renderBuildTheBrand() {
   return `
     <hr class="section-divider">
     <div id="build-the-brand" class="section-header" style="position:relative">
-      <img src="img/frog-peek.png" alt="" class="brand-frog-peek">
+      <img src="https://yourbrand.io/wp-content/uploads/2026/03/kenna-frog-CTA.png" alt="" class="brand-frog-peek">
       <h2 class="section-title">Build the Kenna Brand — It Pays Off</h2>
       <p class="section-subtitle">Your personal brand IS the team's brand. Every relationship you build generates leads that actually close.</p>
     </div>
