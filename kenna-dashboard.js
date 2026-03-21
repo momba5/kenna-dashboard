@@ -621,6 +621,71 @@ function renderAgentCards() {
       <h2 class="section-title">Agent Performance Cards</h2>
       <p class="section-subtitle">Individual performance for each team member — sorted by closed deal volume</p>
     </div>
+
+    <div class="badge-legend">
+      <h4>Achievement Badge Guide</h4>
+      <div class="badge-legend-grid">
+        <!-- Bronze tier -->
+        <div class="badge-legend-item">
+          <span class="badge-pill" style="background:#cd7f32"><img src="img/badge-icon.png" class="badge-icon"> Prospector</span>
+          <span class="badge-desc">Reached 35%+ of assigned leads</span>
+        </div>
+        <div class="badge-legend-item">
+          <span class="badge-pill" style="background:#cd7f32"><img src="img/badge-icon.png" class="badge-icon"> Speed Dial</span>
+          <span class="badge-desc">100+ outbound calls in 90 days</span>
+        </div>
+        <!-- Silver tier -->
+        <div class="badge-legend-item">
+          <span class="badge-pill" style="background:#c0c0c0"><img src="img/badge-icon.png" class="badge-icon"> Conversation Starter</span>
+          <span class="badge-desc">12%+ of leads respond to text or email</span>
+        </div>
+        <div class="badge-legend-item">
+          <span class="badge-pill" style="background:#c0c0c0"><img src="img/badge-icon.png" class="badge-icon"> Pipeline Builder</span>
+          <span class="badge-desc">5%+ of leads in Warm/Hot/Pending stages</span>
+        </div>
+        <div class="badge-legend-item">
+          <span class="badge-pill" style="background:#c0c0c0"><img src="img/badge-icon.png" class="badge-icon"> First Responder</span>
+          <span class="badge-desc">Under 5% of leads tagged "Never Called"</span>
+        </div>
+        <div class="badge-legend-item">
+          <span class="badge-pill" style="background:#c0c0c0"><img src="img/badge-icon.png" class="badge-icon"> Mover</span>
+          <span class="badge-desc">20%+ of leads advanced to Nurture or beyond</span>
+        </div>
+        <!-- Gold tier -->
+        <div class="badge-legend-item">
+          <span class="badge-pill" style="background:#ffd700"><img src="img/badge-icon.png" class="badge-icon"> Finance Ready</span>
+          <span class="badge-desc">3+ leads sent to lender</span>
+        </div>
+        <div class="badge-legend-item">
+          <span class="badge-pill" style="background:#ffd700"><img src="img/badge-icon.png" class="badge-icon"> Closer</span>
+          <span class="badge-desc">Closed at least 1 deal</span>
+        </div>
+        <!-- Platinum tier -->
+        <div class="badge-legend-item">
+          <span class="badge-pill" style="background:#e5e4e2"><img src="img/badge-icon.png" class="badge-icon"> Rainmaker</span>
+          <span class="badge-desc">5+ closings AND 5+ relationship leads</span>
+        </div>
+        <div class="badge-legend-item">
+          <span class="badge-pill" style="background:#e5e4e2"><img src="img/badge-icon.png" class="badge-icon"> Team Leader</span>
+          <span class="badge-desc">Leads and coaches the team</span>
+        </div>
+        <!-- ISA badges -->
+        <div class="badge-legend-item">
+          <span class="badge-pill" style="background:#ffd700"><img src="img/badge-icon.png" class="badge-icon"> Phone Warrior</span>
+          <span class="badge-desc">ISA: 500+ outbound calls in 90 days</span>
+        </div>
+        <div class="badge-legend-item">
+          <span class="badge-pill" style="background:#c0c0c0"><img src="img/badge-icon.png" class="badge-icon"> Lead Warmer</span>
+          <span class="badge-desc">ISA: Advancing leads past Attempted stage</span>
+        </div>
+        <!-- Special -->
+        <div class="badge-legend-item">
+          <span class="badge-pill" style="background:linear-gradient(135deg, #f87171, #fbbf24)"><img src="img/badge-icon.png" class="badge-icon"> 🥩 Steak Dinner Winner</span>
+          <span class="badge-desc">TBD — Brian's special award. Stay tuned.</span>
+        </div>
+      </div>
+    </div>
+
     <div class="agent-grid">
   `;
 
@@ -1396,29 +1461,29 @@ function renderBuildTheBrand() {
   const b = BRAND_DATA;
   const actions = [
     {
-      title: "Share One Listing Per Week on Your Personal Social Media",
-      what: "You don't need to be a content creator. Just share a listing photo with a personal comment like \"Love this kitchen — who's looking for a home in Lakewood?\" Tag @KennaRealEstateGroup.",
-      why: "92% of agents say online reviews and social visibility directly impact their business (NAR). Your friends see you as the real estate expert when you post consistently."
+      title: "Post a 30-Second Selfie Video Once a Week",
+      what: "Stand in front of a listing, a neighborhood spot, or just your car and record a quick video. \"Hey, I just showed a great home in Lakewood — if you know anyone looking, give me a call!\" Post it to Instagram Reels, Facebook, or TikTok.",
+      why: "Listings with video get 403% more inquiries (NAR). Video generates 1,200% more shares than text and images combined. Yet only 38% of agents use video — massive competitive advantage. 73% of homeowners prefer agents who use video."
     },
     {
       title: "Ask Every Closing Client for a Google Review",
       what: "Right after closing, while they're happy, say: \"Would you mind leaving us a quick Google review? It really helps the team.\" Send them the direct link.",
-      why: "Reviews build trust before a lead ever calls. Referred clients convert 30% better than cold leads (American Marketing Association)."
+      why: "Referred clients convert 30% better than cold leads (American Marketing Association). 92% of agents say online reviews directly impact their business (NAR survey, Kerfuffle)."
     },
     {
       title: "Text 5 People in Your Sphere Every Week",
       what: "Not a sales pitch — just a check-in. \"Hey, how's the new house treating you?\" or \"Saw your kid's soccer game post — awesome!\" Keep the relationship warm.",
-      why: "Your data shows 555 leads respond to text messages. People who feel connected to you refer their friends. One referral = $543K average deal value."
+      why: "38% of agents' new clients originate from social media and sphere interactions (Hootsuite/NAR). Kenna's own data: 555 leads respond to text messages. One referral = $543K average deal value."
+    },
+    {
+      title: "Share One Listing or Market Update on Social Media Weekly",
+      what: "Doesn't have to be fancy. Share a listing photo, a quick market stat, or congratulate a teammate on a closing. Tag @KennaRealEstateGroup. Consistency beats perfection — 71% of buyers hire the first agent they interview, often someone they already follow (The Close).",
+      why: "Agents who use social media consistently generate 66% more leads than those who don't (HubSpot). Facebook video gets 6x more engagement than static posts."
     },
     {
       title: "Host or Attend One Community Event Per Quarter",
       what: "Client appreciation parties, local charity events, open houses with a neighborhood vibe. Invite past clients. They bring friends. Friends become leads.",
-      why: "Kenna's Sphere leads close at 7.5%. Every person you meet at an event could become one of those leads. Follow Up Boss even has a guide on this — your CRM supports it."
-    },
-    {
-      title: "Cross-Promote Your Teammates",
-      what: "When a teammate closes a deal, congratulate them publicly on social. When you meet someone outside your niche, refer them to the right Kenna agent instead of letting the lead die.",
-      why: "The team closed $34.3M together. When one agent promotes another, the whole brand grows. Tahverle/Beverly have 29 closings — imagine if every agent shared their success stories."
+      why: "Kenna's Sphere leads close at 7.5% — every new relationship is potential revenue. Every person you meet at an event could become one of those leads. Follow Up Boss even has a guide on this — your CRM supports it."
     }
   ];
 

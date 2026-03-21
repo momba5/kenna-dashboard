@@ -30,6 +30,16 @@
   --stage-archives: #475569;
 }
 
+/* CONTRAST FIX — explicit colors for all text elements */
+body { color: #e2e8f0 !important; background: #0f1117 !important; }
+h1, h2, h3, h4, h5, h6 { color: #f1f5f9 !important; }
+p, li, td, th, span, div { color: inherit; }
+.section-title { color: #f1f5f9 !important; }
+.section-subtitle { color: #94a3b8 !important; }
+.nav-link { color: #94a3b8 !important; }
+.nav-link:hover { color: #e2e8f0 !important; }
+a { color: #60a5fa; }
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -102,7 +112,7 @@ body {
 
 .nav-date {
   margin-left: auto;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-faint);
   white-space: nowrap;
 }
@@ -156,6 +166,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  color: #e2e8f0;
 }
 
 .kpi-value {
@@ -180,7 +191,7 @@ body {
 }
 
 .kpi-note {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-faint);
   line-height: 1.4;
   margin-top: 2px;
@@ -220,6 +231,7 @@ body {
   border-radius: 14px;
   overflow: hidden;
   transition: border-color 0.2s;
+  color: #e2e8f0;
 }
 
 .agent-card:hover {
@@ -253,7 +265,7 @@ body {
 }
 
 .agent-badge {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   padding: 3px 10px;
   border-radius: 20px;
@@ -280,7 +292,7 @@ body {
 .badge-new-agent {
   background: rgba(251, 191, 36, 0.15);
   color: var(--yellow);
-  font-size: 10px;
+  font-size: 13px;
 }
 
 /* Agent Metrics Row */
@@ -309,7 +321,7 @@ body {
 }
 
 .agent-metric-label {
-  font-size: 10.5px;
+  font-size: 13px;
   color: var(--text-muted);
   margin-top: 2px;
   line-height: 1.3;
@@ -321,7 +333,7 @@ body {
 }
 
 .agent-section-title {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-faint);
   text-transform: uppercase;
@@ -336,7 +348,7 @@ body {
 }
 
 .phone-stat {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   background: var(--bg-alt);
   padding: 5px 10px;
@@ -355,7 +367,7 @@ body {
 }
 
 .stage-bar-title {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-faint);
   text-transform: uppercase;
@@ -375,7 +387,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   color: #fff;
   min-width: 2px;
@@ -398,7 +410,7 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
@@ -421,10 +433,11 @@ body {
 .coaching-section {
   background: var(--card);
   padding: 16px 20px;
+  color: #e2e8f0;
 }
 
 .coaching-title {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   margin-bottom: 8px;
   display: flex;
@@ -452,7 +465,7 @@ body {
 }
 
 .coaching-list li {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   line-height: 1.5;
   padding-left: 16px;
@@ -502,7 +515,7 @@ body {
 .source-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12.5px;
+  font-size: 14px;
 }
 
 .source-table thead th {
@@ -511,7 +524,7 @@ body {
   text-align: left;
   font-weight: 600;
   color: var(--text-faint);
-  font-size: 11px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   border-bottom: 1px solid var(--border);
@@ -544,7 +557,7 @@ body {
 
 .source-note {
   padding: 12px 20px 16px;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-faint);
   line-height: 1.5;
   border-top: 1px solid var(--border);
@@ -608,7 +621,7 @@ body {
 .footer a {
   color: var(--text-faint);
   text-decoration: none;
-  font-size: 12px;
+  font-size: 13px;
   transition: color 0.2s;
 }
 
@@ -616,9 +629,7 @@ body {
   color: var(--text-muted);
 }
 
-.footer-pplx {
-  margin-top: 8px;
-}
+
 
 /* ─── Responsive ─── */
 @media (max-width: 1024px) {
@@ -662,7 +673,7 @@ body {
     gap: 4px;
   }
   .phone-stat {
-    font-size: 11px;
+    font-size: 13px;
     padding: 4px 8px;
   }
   .section-title {
@@ -697,6 +708,7 @@ body {
   border-radius: 12px;
   padding: 24px;
   border-left: 4px solid var(--teal);
+  color: #e2e8f0;
 }
 
 .ptc-card.border-blue { border-left-color: var(--blue); }
@@ -726,7 +738,7 @@ body {
 }
 
 .ptc-bullet {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   line-height: 1.6;
   padding-left: 14px;
@@ -766,7 +778,8 @@ body {
 }
 
 .stl-chip {
-  font-size: 11.5px;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text-muted);
   background: var(--bg-alt);
   padding: 5px 10px;
@@ -813,7 +826,7 @@ body {
 }
 
 .badges-title {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-faint);
   text-transform: uppercase;
@@ -879,12 +892,12 @@ body {
 .spike-label {
   color: var(--red);
   font-weight: 600;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .partial-label {
   color: var(--text-faint);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 /* Callout boxes */
@@ -943,7 +956,7 @@ body {
 }
 
 .hbar-label {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -964,7 +977,7 @@ body {
 }
 
 .hbar-value {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text);
   text-align: right;
@@ -985,6 +998,7 @@ body {
   border-radius: 12px;
   padding: 24px;
   border-top: 3px solid transparent;
+  color: #e2e8f0;
 }
 
 .insight-card.insight-teal {
@@ -1019,7 +1033,7 @@ body {
 }
 
 .insight-subhead {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-faint);
   text-transform: uppercase;
@@ -1034,7 +1048,7 @@ body {
 }
 
 .insight-list li {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   line-height: 1.6;
   margin-bottom: 4px;
@@ -1046,7 +1060,7 @@ body {
 }
 
 .insight-note {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-faint);
   font-style: italic;
   margin-bottom: 0;
@@ -1080,7 +1094,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 20px;
   padding: 8px 16px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-muted);
   white-space: nowrap;
   display: inline-flex;
@@ -1120,6 +1134,7 @@ body {
   border-radius: 12px;
   padding: 24px;
   border-left: 4px solid var(--teal);
+  color: #e2e8f0;
 }
 
 .brand-data-card.brand-border-teal { border-left-color: var(--teal); }
@@ -1155,7 +1170,7 @@ body {
 }
 
 .brand-data-note {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-faint);
   font-style: italic;
   line-height: 1.5;
@@ -1172,7 +1187,7 @@ body {
 }
 
 .brand-compare-row {
-  font-size: 12px;
+  font-size: 13px;
   padding: 6px 10px;
   border-radius: 6px;
   line-height: 1.4;
@@ -1189,7 +1204,7 @@ body {
 }
 
 .brand-data-builders-label {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-faint);
   text-transform: uppercase;
@@ -1205,7 +1220,7 @@ body {
 }
 
 .brand-builder-chip {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   background: var(--bg-alt);
   padding: 5px 10px;
@@ -1248,6 +1263,7 @@ body {
   border-radius: 12px;
   padding: 20px 24px;
   transition: border-color 0.2s;
+  color: #e2e8f0;
 }
 
 .brand-action-card:hover {
@@ -1290,7 +1306,7 @@ body {
 }
 
 .brand-action-why {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--text-faint);
   line-height: 1.6;
   padding: 10px 12px;
@@ -1302,7 +1318,7 @@ body {
 .brand-action-why strong {
   color: var(--teal);
   font-weight: 600;
-  font-size: 10px;
+  font-size: 13px;
   letter-spacing: 0.04em;
 }
 
@@ -1395,15 +1411,45 @@ body {
     gap: 4px;
   }
   .stl-chip {
-    font-size: 10.5px;
+    font-size: 13px;
     padding: 4px 8px;
   }
   .badges-row {
     gap: 4px;
   }
   .badge-pill {
-    height: 22px;
-    font-size: 10px;
+    height: 26px;
+    font-size: 12px;
     padding: 0 8px;
   }
+}
+
+/* ─── Badge Legend ─── */
+.badge-legend {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  color: #e2e8f0;
+}
+.badge-legend h4 {
+  color: #f1f5f9;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.badge-legend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+.badge-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.badge-desc {
+  color: #94a3b8;
+  font-size: 13px;
 }
