@@ -413,6 +413,25 @@ const FUN_STATS = [
   {emoji:"🐸",text:"Sphere leads close at 8.6% — your network is your net worth"}
 ];
 
+const BRAND_DATA = {
+  sphere_leads: 106,
+  sphere_closed: 8,
+  sphere_close_rate: 7.5,
+  sphere_volume: 5803000,
+  online_leads: 4565,
+  online_closed: 7,
+  online_close_rate: 0.15,
+  online_volume: 470000,
+  paid_spend_estimate: 22050,
+  avg_deal_value: 543820,
+  top_builders: [
+    {name:"Brenna Lodge", pct:10},
+    {name:"Brian Burke", pct:9},
+    {name:"Henry Chu", pct:7},
+    {name:"Lindsey Jenkins", pct:3}
+  ]
+};
+
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 
 const STAGE_ORDER = ["New", "Attempted", "Spoke", "Nurture", "Warm", "Hot", "Pending", "Closed", "Archives"];
@@ -1373,6 +1392,112 @@ function renderFunStats() {
   `;
 }
 
+function renderBuildTheBrand() {
+  const b = BRAND_DATA;
+  const actions = [
+    {
+      title: "Share One Listing Per Week on Your Personal Social Media",
+      what: "You don't need to be a content creator. Just share a listing photo with a personal comment like \"Love this kitchen — who's looking for a home in Lakewood?\" Tag @KennaRealEstateGroup.",
+      why: "92% of agents say online reviews and social visibility directly impact their business (NAR). Your friends see you as the real estate expert when you post consistently."
+    },
+    {
+      title: "Ask Every Closing Client for a Google Review",
+      what: "Right after closing, while they're happy, say: \"Would you mind leaving us a quick Google review? It really helps the team.\" Send them the direct link.",
+      why: "Reviews build trust before a lead ever calls. Referred clients convert 30% better than cold leads (American Marketing Association)."
+    },
+    {
+      title: "Text 5 People in Your Sphere Every Week",
+      what: "Not a sales pitch — just a check-in. \"Hey, how's the new house treating you?\" or \"Saw your kid's soccer game post — awesome!\" Keep the relationship warm.",
+      why: "Your data shows 555 leads respond to text messages. People who feel connected to you refer their friends. One referral = $543K average deal value."
+    },
+    {
+      title: "Host or Attend One Community Event Per Quarter",
+      what: "Client appreciation parties, local charity events, open houses with a neighborhood vibe. Invite past clients. They bring friends. Friends become leads.",
+      why: "Kenna's Sphere leads close at 7.5%. Every person you meet at an event could become one of those leads. Follow Up Boss even has a guide on this — your CRM supports it."
+    },
+    {
+      title: "Cross-Promote Your Teammates",
+      what: "When a teammate closes a deal, congratulate them publicly on social. When you meet someone outside your niche, refer them to the right Kenna agent instead of letting the lead die.",
+      why: "The team closed $34.3M together. When one agent promotes another, the whole brand grows. Tahverle/Beverly have 29 closings — imagine if every agent shared their success stories."
+    }
+  ];
+
+  let actionCards = '';
+  actions.forEach((a, i) => {
+    actionCards += `
+      <div class="brand-action-card">
+        <div class="brand-action-number">${i + 1}</div>
+        <div class="brand-action-content">
+          <div class="brand-action-title">${a.title}</div>
+          <p class="brand-action-what">${a.what}</p>
+          <div class="brand-action-why"><strong>WHY IT WORKS:</strong> ${a.why}</div>
+        </div>
+      </div>`;
+  });
+
+  let builderChips = '';
+  b.top_builders.forEach(t => {
+    builderChips += `<span class="brand-builder-chip">${t.name}: <strong>${t.pct}%</strong></span>`;
+  });
+
+  return `
+    <hr class="section-divider">
+    <div id="build-the-brand" class="section-header" style="position:relative">
+      <img src="img/frog-peek.png" alt="" class="brand-frog-peek">
+      <h2 class="section-title">Build the Kenna Brand — It Pays Off</h2>
+      <p class="section-subtitle">Your personal brand IS the team's brand. Every relationship you build generates leads that actually close.</p>
+    </div>
+
+    <!-- Part 1: The Data Makes the Case -->
+    <div class="brand-data-grid">
+      <div class="brand-data-card brand-border-teal">
+        <div class="brand-data-card-title">Relationships vs Online</div>
+        <div class="brand-big-number text-teal">50x</div>
+        <p class="brand-data-text">Sphere and referral leads close at <strong>7.5%</strong> — online leads close at <strong>0.15%</strong>. That's a 50x difference.</p>
+        <div class="brand-data-compare">
+          <div class="brand-compare-row brand-compare-good">106 relationship leads → 8 closings → $5.8M volume</div>
+          <div class="brand-compare-row brand-compare-bad">4,565 online leads → 7 closings → $470K volume</div>
+        </div>
+      </div>
+      <div class="brand-data-card brand-border-orange">
+        <div class="brand-data-card-title">The $22K Question</div>
+        <div class="brand-big-number text-orange">$22,050</div>
+        <p class="brand-data-text">Estimated spend on Google PPC + Facebook Ads → <strong>0 closings</strong></p>
+        <p class="brand-data-text">Sphere leads cost <strong>$0</strong> in ad spend → <strong>4 closings, $2.4M+ volume</strong></p>
+        <p class="brand-data-note">Every referral you generate saves the team money AND actually closes.</p>
+      </div>
+      <div class="brand-data-card brand-border-purple">
+        <div class="brand-data-card-title">Who's Building Relationships?</div>
+        <div class="brand-big-number text-purple">Only 2%</div>
+        <p class="brand-data-text">Only 106 of 5,345 leads come from Sphere/Referral sources. There's <strong>massive room to grow</strong>.</p>
+        <div class="brand-data-builders-label">Top relationship builders:</div>
+        <div class="brand-builders-row">${builderChips}</div>
+      </div>
+    </div>
+
+    <!-- Part 2: 5 Things Every Agent Can Do This Month -->
+    <div class="brand-actions-header">
+      <h3 class="brand-actions-title">5 Things Every Agent Can Do This Month</h3>
+    </div>
+    <div class="brand-actions-list">
+      ${actionCards}
+    </div>
+
+    <!-- Part 3: How It Helps YOU -->
+    <div class="brand-helps-you">
+      <div class="brand-helps-you-title">How It Helps YOU</div>
+      <p class="brand-helps-you-text">Every relationship lead you bring in:</p>
+      <ul class="brand-helps-list">
+        <li>Costs <strong>$0</strong> in ad spend</li>
+        <li>Closes at <strong>50x</strong> the rate of online leads</li>
+        <li>Earns you <strong>full commission</strong> (no referral fee)</li>
+        <li>Builds <strong>YOUR reputation</strong> as the go-to agent in your community</li>
+        <li>Makes Brian's job easier — he can invest more in <strong>tools that help YOU</strong> instead of ads that don't close</li>
+      </ul>
+    </div>
+  `;
+}
+
 function renderFooter() {
   return `
     <footer class="footer">
@@ -1392,6 +1517,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ${renderTeamOverview()}
       ${renderFunnelChart()}
       ${renderPathToClose()}
+      ${renderBuildTheBrand()}
       ${renderMonthlyBreakdown()}
       ${renderLastMonth()}
       ${renderAgentCards()}
