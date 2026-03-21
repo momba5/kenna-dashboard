@@ -1146,7 +1146,7 @@ function renderPathToClose() {
         <div class="ptc-big-stat text-teal">8.6% <span style="font-size:16px;color:var(--text-muted)">close rate</span></div>
         <div class="ptc-big-label">Sphere leads vs <strong style="color:var(--text)">0.03%</strong> for Google Organic</div>
         <div class="ptc-bullet">6 of 14 post-migration closings came from Sphere/Referral sources</div>
-        <div class="ptc-bullet">Leads from personal relationships are 280x more likely to close than online leads</div>
+        <div class="ptc-bullet">Sphere leads close at 7.5% vs 0.15% for online — but online leads are still maturing through the pipeline</div>
       </div>
       <div class="ptc-card border-blue">
         <div class="ptc-card-title">Making Contact Matters</div>
@@ -1159,7 +1159,7 @@ function renderPathToClose() {
         <div class="ptc-card-title">Speed &amp; Persistence Win</div>
         <div class="ptc-big-stat text-orange">23%</div>
         <div class="ptc-big-label">of leads tagged "First Call Never Made"</div>
-        <div class="ptc-bullet">Leads contacted within 5 minutes convert 21x better (industry benchmark)</div>
+        <div class="ptc-bullet">Industry research: leads contacted within 5 minutes convert at much higher rates (InsideSales.com/MIT study) — not yet measured for Kenna</div>
         <div class="ptc-bullet">Current median first call: 10+ days after lead creation</div>
       </div>
     </div>
@@ -1517,19 +1517,19 @@ function renderBuildTheBrand() {
     <div class="brand-data-grid">
       <div class="brand-data-card brand-border-teal">
         <div class="brand-data-card-title">Relationships vs Online</div>
-        <div class="brand-big-number text-teal">50x</div>
-        <p class="brand-data-text">Sphere and referral leads close at <strong>7.5%</strong> — online leads close at <strong>0.15%</strong>. That's a 50x difference.</p>
+        <div class="brand-big-number text-teal">7.5%</div>
+        <p class="brand-data-text">Sphere and referral leads close at <strong>7.5%</strong> — online leads at <strong>0.15%</strong> so far. Online leads are newer (most under 9 months) so this gap will likely narrow as they mature.</p>
         <div class="brand-data-compare">
           <div class="brand-compare-row brand-compare-good">106 relationship leads → 8 closings → $5.8M volume</div>
           <div class="brand-compare-row brand-compare-bad">4,565 online leads → 7 closings → $470K volume</div>
         </div>
       </div>
       <div class="brand-data-card brand-border-orange">
-        <div class="brand-data-card-title">The $22K Question</div>
-        <div class="brand-big-number text-orange">$22,050</div>
-        <p class="brand-data-text">Estimated spend on Google PPC + Facebook Ads → <strong>0 closings</strong></p>
-        <p class="brand-data-text">Sphere leads cost <strong>$0</strong> in ad spend → <strong>4 closings, $2.4M+ volume</strong></p>
-        <p class="brand-data-note">Every referral you generate saves the team money AND actually closes.</p>
+        <div class="brand-data-card-title">The Conversion Gap</div>
+        <div class="brand-big-number text-orange">0.15%</div>
+        <p class="brand-data-text">Online lead close rate so far (7 of 4,565). These leads are still early — most are under 9 months old in a 12-18 month sales cycle.</p>
+        <p class="brand-data-text">Sphere leads close at <strong>7.5%</strong> right now. The opportunity: <strong>improve online conversion</strong> while adding more Sphere leads on top.</p>
+        <p class="brand-data-note">Even moving online conversion from 0.15% to 1% would mean 46 closings per year from leads already in FUB.</p>
       </div>
       <div class="brand-data-card brand-border-purple">
         <div class="brand-data-card-title">Who's Building Relationships?</div>
@@ -1618,10 +1618,10 @@ function renderBuildTheBrand() {
       <p class="brand-helps-you-text">Every relationship lead you bring in:</p>
       <ul class="brand-helps-list">
         <li>Costs <strong>$0</strong> in ad spend</li>
-        <li>Closes at <strong>50x</strong> the rate of online leads</li>
+        <li>Currently closes at a higher rate than online leads (which are still maturing)</li>
         <li>Earns you <strong>full commission</strong> (no referral fee)</li>
         <li>Builds <strong>YOUR reputation</strong> as the go-to agent in your community</li>
-        <li>Makes Brian's job easier — he can invest more in <strong>tools that help YOU</strong> instead of ads that don't close</li>
+        <li>Makes Brian's job easier — he can invest more in <strong>tools that help YOU</strong> while the team improves conversion on every channel</li>
       </ul>
     </div>
   `;
