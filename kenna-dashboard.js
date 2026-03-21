@@ -1564,7 +1564,47 @@ function renderBuildTheBrand() {
       <p style="color:#94a3b8;font-size:14px;margin-top:16px;margin-bottom:0;line-height:1.5"><strong style="color:#e2e8f0">The mistake most agents make:</strong> jumping straight to tactics without a vision or goals. You end up busy but not productive. The 5 actions below are <em>tactics</em> — but they only work when you connect them to <em>your</em> goals and <em>your</em> vision for where you want your career to go. Brian can help you define all three.</p>
     </div>
 
-    <!-- Part 2: 5 Things Every Agent Can Do This Month -->
+    <!-- Part 1C: Growing Your Sphere -->
+    <div style="background:var(--card,#1a1b2e);border:1px solid var(--border,#2d2f45);border-radius:12px;padding:28px 32px;margin-bottom:28px">
+      <h3 style="color:#f1f5f9;font-size:20px;font-weight:700;margin-bottom:4px">Growing Your Sphere — The Numbers Behind It</h3>
+      <p style="color:#94a3b8;font-size:14px;margin-bottom:20px">Right now, only 2% of Kenna's leads come from Sphere/Referral. Industry data says this should be your biggest source. Here's why — and how to grow it.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:20px">
+        <div style="background:rgba(46,204,113,0.08);border-radius:10px;padding:16px">
+          <div style="color:#2ecc71;font-size:28px;font-weight:700">82%</div>
+          <p style="color:#e2e8f0;font-size:14px;margin:4px 0 0">of all real estate transactions come from repeat clients, referrals, friends, family, and personal contacts <span style="color:#94a3b8">(Buffini & Company)</span></p>
+        </div>
+        <div style="background:rgba(96,165,250,0.08);border-radius:10px;padding:16px">
+          <div style="color:#60a5fa;font-size:28px;font-weight:700">41%</div>
+          <p style="color:#e2e8f0;font-size:14px;margin:4px 0 0">of business for agents with 16+ years experience comes from repeat clients alone. The longer you invest in relationships, the less you need to prospect. <span style="color:#94a3b8">(NAR 2025 Member Profile)</span></p>
+        </div>
+        <div style="background:rgba(251,146,60,0.08);border-radius:10px;padding:16px">
+          <div style="color:#fb923c;font-size:28px;font-weight:700">80%</div>
+          <p style="color:#e2e8f0;font-size:14px;margin:4px 0 0">of real estate teams — small and large — say most of their deals come from SOI. Yet over half admit their SOI systems are only "basic." <span style="color:#94a3b8">(RealScout/HousingWire 2024)</span></p>
+        </div>
+      </div>
+      <h4 style="color:#f1f5f9;font-size:16px;font-weight:600;margin-bottom:12px">How to Grow Your Sphere from 0 to 200+</h4>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+        <div style="padding:12px 16px;border-left:3px solid #2ecc71;background:rgba(46,204,113,0.04);border-radius:0 8px 8px 0">
+          <div style="color:#2ecc71;font-size:13px;font-weight:700;margin-bottom:4px">START: LIST EVERYONE YOU KNOW</div>
+          <p style="color:#cbd5e1;font-size:14px;line-height:1.5;margin:0">Past clients, friends, family, neighbors, your barber, your kids' teachers, your gym buddies. Most agents undercount their SOI. The average person knows 200+ people. Write them all down and add them to FUB with the "Sphere" source tag.</p>
+        </div>
+        <div style="padding:12px 16px;border-left:3px solid #60a5fa;background:rgba(96,165,250,0.04);border-radius:0 8px 8px 0">
+          <div style="color:#60a5fa;font-size:13px;font-weight:700;margin-bottom:4px">NURTURE: THE 3-TOUCH QUARTERLY PLAN</div>
+          <p style="color:#cbd5e1;font-size:14px;line-height:1.5;margin:0">Every quarter, each Sphere contact should get: 1 phone call (just catch up — don't pitch), 1 text checking in on their life, and 1 piece of value (market update, neighborhood stat, or event invite). FUB action plans can automate the reminders. <span style="color:#94a3b8">(FUB has a guide: followupboss.com/blog/spheres-influence)</span></p>
+        </div>
+        <div style="padding:12px 16px;border-left:3px solid #fb923c;background:rgba(251,146,60,0.04);border-radius:0 8px 8px 0">
+          <div style="color:#fb923c;font-size:13px;font-weight:700;margin-bottom:4px">ASK: THE REFERRAL CONVERSATION</div>
+          <p style="color:#cbd5e1;font-size:14px;line-height:1.5;margin:0">84% of people trust recommendations from people they know (Nielsen). But they won't refer you if they don't remember you're in real estate. After every closing and every meaningful conversation, say: "If you know anyone thinking about buying or selling, I'd love to help them too." Referred clients convert 30% better than cold leads. <span style="color:#94a3b8">(American Marketing Association)</span></p>
+        </div>
+        <div style="padding:12px 16px;border-left:3px solid #a78bfa;background:rgba(167,139,250,0.04);border-radius:0 8px 8px 0">
+          <div style="color:#a78bfa;font-size:13px;font-weight:700;margin-bottom:4px">EXPAND: ADD 2 NEW PEOPLE PER WEEK</div>
+          <p style="color:#cbd5e1;font-size:14px;line-height:1.5;margin:0">Meet someone at an open house? Add them. Chat with a vendor? Add them. Every new relationship is a potential referral. At 2 per week, that's 100+ new SOI contacts per year. Your network compounds — each new person knows 200 people you don't.</p>
+        </div>
+      </div>
+      <p style="color:#94a3b8;font-size:14px;margin-top:16px;margin-bottom:0"><strong style="color:#e2e8f0">The bottom line:</strong> Kenna's Sphere leads close at 7.5%. Online leads close at 0.15%. Every hour you invest in relationships returns more than any hour spent chasing internet leads. The internet leads matter — they fill the funnel — but your Sphere is where the closings come from.</p>
+    </div>
+
+    <!-- Part 2: 5 Tactics Every Agent Can Start This Month -->
     <div class="brand-actions-header">
       <h3 class="brand-actions-title">5 Tactics Every Agent Can Start This Month</h3>
     </div>
