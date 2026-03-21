@@ -1540,9 +1540,33 @@ function renderBuildTheBrand() {
       </div>
     </div>
 
+    <!-- Part 1B: Vision, Goals, Tactics Framework -->
+    <div style="background:var(--card,#1a1b2e);border:1px solid var(--border,#2d2f45);border-radius:12px;padding:28px 32px;margin-bottom:28px">
+      <h3 style="color:#f1f5f9;font-size:20px;font-weight:700;margin-bottom:6px">Vision → Goals → Tactics: Know the Difference</h3>
+      <p style="color:#94a3b8;font-size:14px;margin-bottom:20px">The most successful agents don't just grind — they work with intention. Here's how to think about your business at three levels:</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+        <div style="border-left:3px solid #a78bfa;padding:12px 16px;background:rgba(167,139,250,0.06);border-radius:0 8px 8px 0">
+          <div style="color:#a78bfa;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Vision</div>
+          <div style="color:#f1f5f9;font-size:16px;font-weight:600;margin-bottom:6px">Where you're going</div>
+          <p style="color:#cbd5e1;font-size:14px;line-height:1.5;margin:0">Your vision is the big picture — the future you're building toward. It doesn't change month to month. Example: <em>"I want to be the go-to agent for families relocating to the Denver metro, known for honest advice and local expertise."</em></p>
+        </div>
+        <div style="border-left:3px solid #2ecc71;padding:12px 16px;background:rgba(46,204,113,0.06);border-radius:0 8px 8px 0">
+          <div style="color:#2ecc71;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Goals</div>
+          <div style="color:#f1f5f9;font-size:16px;font-weight:600;margin-bottom:6px">What you're measuring</div>
+          <p style="color:#cbd5e1;font-size:14px;line-height:1.5;margin:0">Goals are specific, time-bound targets that move you toward your vision. They're how you know you're making progress. Example: <em>"Close 2 deals this quarter"</em> or <em>"Get 5 Google reviews this month"</em> or <em>"Reach 50% of my assigned leads."</em></p>
+        </div>
+        <div style="border-left:3px solid #fb923c;padding:12px 16px;background:rgba(251,146,60,0.06);border-radius:0 8px 8px 0">
+          <div style="color:#fb923c;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Tactics</div>
+          <div style="color:#f1f5f9;font-size:16px;font-weight:600;margin-bottom:6px">What you do every day</div>
+          <p style="color:#cbd5e1;font-size:14px;line-height:1.5;margin:0">Tactics are the daily and weekly actions that achieve your goals. They're small, repeatable, and controllable. Example: <em>"Post one selfie video per week"</em> or <em>"Text 5 past clients every Monday"</em> or <em>"Call 10 new leads within 5 minutes of assignment."</em></p>
+        </div>
+      </div>
+      <p style="color:#94a3b8;font-size:14px;margin-top:16px;margin-bottom:0;line-height:1.5"><strong style="color:#e2e8f0">The mistake most agents make:</strong> jumping straight to tactics without a vision or goals. You end up busy but not productive. The 5 actions below are <em>tactics</em> — but they only work when you connect them to <em>your</em> goals and <em>your</em> vision for where you want your career to go. Brian can help you define all three.</p>
+    </div>
+
     <!-- Part 2: 5 Things Every Agent Can Do This Month -->
     <div class="brand-actions-header">
-      <h3 class="brand-actions-title">5 Things Every Agent Can Do This Month</h3>
+      <h3 class="brand-actions-title">5 Tactics Every Agent Can Start This Month</h3>
     </div>
     <div class="brand-actions-list">
       ${actionCards}
