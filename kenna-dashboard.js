@@ -1458,171 +1458,30 @@ function renderFunStats() {
 }
 
 function renderBuildTheBrand() {
-  const b = BRAND_DATA;
-  const actions = [
-    {
-      title: "Post a 30-Second Selfie Video Once a Week",
-      what: "Stand in front of a listing, a neighborhood spot, or just your car and record a quick video. \"Hey, I just showed a great home in Lakewood — if you know anyone looking, give me a call!\" Post it to Instagram Reels, Facebook, or TikTok.",
-      why: "Listings with video get 403% more inquiries (NAR). Video generates 1,200% more shares than text and images combined. Yet only 38% of agents use video — massive competitive advantage. 73% of homeowners prefer agents who use video."
-    },
-    {
-      title: "Ask Every Closing Client for a Google Review",
-      what: "Right after closing, while they're happy, say: \"Would you mind leaving us a quick Google review? It really helps the team.\" Send them the direct link.",
-      why: "Referred clients convert 30% better than cold leads (American Marketing Association). 92% of agents say online reviews directly impact their business (NAR survey, Kerfuffle)."
-    },
-    {
-      title: "Text 5 People in Your Sphere Every Week",
-      what: "Not a sales pitch — just a check-in. \"Hey, how's the new house treating you?\" or \"Saw your kid's soccer game post — awesome!\" Keep the relationship warm.",
-      why: "38% of agents' new clients originate from social media and sphere interactions (Hootsuite/NAR). Kenna's own data: 555 leads respond to text messages. One referral = $543K average deal value."
-    },
-    {
-      title: "Share One Listing or Market Update on Social Media Weekly",
-      what: "Doesn't have to be fancy. Share a listing photo, a quick market stat, or congratulate a teammate on a closing. Tag @KennaRealEstateGroup. Consistency beats perfection — 71% of buyers hire the first agent they interview, often someone they already follow (The Close).",
-      why: "Agents who use social media consistently generate 66% more leads than those who don't (HubSpot). Facebook video gets 6x more engagement than static posts."
-    },
-    {
-      title: "Host or Attend One Community Event Per Quarter",
-      what: "Client appreciation parties, local charity events, open houses with a neighborhood vibe. Invite past clients. They bring friends. Friends become leads.",
-      why: "Kenna's Sphere leads close at 7.5% — every new relationship is potential revenue. Every person you meet at an event could become one of those leads. Follow Up Boss even has a guide on this — your CRM supports it."
-    }
-  ];
-
-  let actionCards = '';
-  actions.forEach((a, i) => {
-    actionCards += `
-      <div class="brand-action-card">
-        <div class="brand-action-number">${i + 1}</div>
-        <div class="brand-action-content">
-          <div class="brand-action-title">${a.title}</div>
-          <p class="brand-action-what">${a.what}</p>
-          <div class="brand-action-why"><strong>WHY IT WORKS:</strong> ${a.why}</div>
-        </div>
-      </div>`;
-  });
-
-  let builderChips = '';
-  b.top_builders.forEach(t => {
-    builderChips += `<span class="brand-builder-chip">${t.name}: <strong>${t.pct}%</strong></span>`;
-  });
-
   return `
     <hr class="section-divider">
-    <div id="build-the-brand" class="section-header" style="position:relative">
-      <img src="https://yourbrand.io/wp-content/uploads/2026/03/kenna-frog-CTA.png" alt="" class="brand-frog-peek">
-      <h2 class="section-title">Build the Kenna Brand — It Pays Off</h2>
-      <p class="section-subtitle">Your personal brand IS the team's brand. Every relationship you build generates leads that actually close.</p>
+    <div id="build-the-brand" class="section-header">
+      <h2 class="section-title">Team Reminders</h2>
+      <p class="section-subtitle">Brian's message to the team</p>
     </div>
 
-    <!-- Part 1: The Data Makes the Case -->
-    <div class="brand-data-grid">
-      <div class="brand-data-card brand-border-teal">
-        <div class="brand-data-card-title">Relationships vs Online</div>
-        <div class="brand-big-number text-teal">7.5%</div>
-        <p class="brand-data-text">Sphere and referral leads close at <strong>7.5%</strong> — online leads at <strong>0.15%</strong> so far. Online leads are newer (most under 9 months) so this gap will likely narrow as they mature.</p>
-        <div class="brand-data-compare">
-          <div class="brand-compare-row brand-compare-good">106 relationship leads → 8 closings → $5.8M volume</div>
-          <div class="brand-compare-row brand-compare-bad">4,565 online leads → 7 closings → $470K volume</div>
-        </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:24px">
+      <div style="background:var(--card,#1a1b2e);border:1px solid var(--border,#2d2f45);border-radius:12px;padding:24px;border-left:3px solid #2ecc71">
+        <div style="color:#2ecc71;font-size:14px;font-weight:700;margin-bottom:8px">SHARE ON SOCIAL</div>
+        <p style="color:#e2e8f0;font-size:14px;line-height:1.6;margin:0">When you share a listing, a market update, or a selfie video — you drive traffic back to kennarealestate.com. That helps the whole team. Tag @KennaRealEstateGroup so it builds the brand and YOUR name at the same time.</p>
       </div>
-      <div class="brand-data-card brand-border-orange">
-        <div class="brand-data-card-title">The Conversion Gap</div>
-        <div class="brand-big-number text-orange">0.15%</div>
-        <p class="brand-data-text">Online lead close rate so far (7 of 4,565). These leads are still early — most are under 9 months old in a 12-18 month sales cycle.</p>
-        <p class="brand-data-text">Sphere leads close at <strong>7.5%</strong> right now. The opportunity: <strong>improve online conversion</strong> while adding more Sphere leads on top.</p>
-        <p class="brand-data-note">Even moving online conversion from 0.15% to 1% would mean 46 closings per year from leads already in FUB.</p>
+      <div style="background:var(--card,#1a1b2e);border:1px solid var(--border,#2d2f45);border-radius:12px;padding:24px;border-left:3px solid #60a5fa">
+        <div style="color:#60a5fa;font-size:14px;font-weight:700;margin-bottom:8px">LOG YOUR WORK IN FUB</div>
+        <p style="color:#e2e8f0;font-size:14px;line-height:1.6;margin:0">If you're calling, texting, or meeting leads outside the FUB phone system — add a note. Your effort only counts in this dashboard if it's logged. Don't let your hard work be invisible.</p>
       </div>
-      <div class="brand-data-card brand-border-purple">
-        <div class="brand-data-card-title">Who's Building Relationships?</div>
-        <div class="brand-big-number text-purple">Only 2%</div>
-        <p class="brand-data-text">Only 106 of 5,345 leads come from Sphere/Referral sources. There's <strong>massive room to grow</strong>.</p>
-        <div class="brand-data-builders-label">Top relationship builders:</div>
-        <div class="brand-builders-row">${builderChips}</div>
+      <div style="background:var(--card,#1a1b2e);border:1px solid var(--border,#2d2f45);border-radius:12px;padding:24px;border-left:3px solid #fb923c">
+        <div style="color:#fb923c;font-size:14px;font-weight:700;margin-bottom:8px">ASK FOR GOOGLE REVIEWS</div>
+        <p style="color:#e2e8f0;font-size:14px;line-height:1.6;margin:0">After every closing, ask your client for a quick Google review. Reviews build trust with future leads before they ever call. It takes 30 seconds and it helps every agent on the team.</p>
       </div>
-    </div>
-
-    <!-- Part 1B: Vision, Goals, Tactics Framework -->
-    <div style="background:var(--card,#1a1b2e);border:1px solid var(--border,#2d2f45);border-radius:12px;padding:28px 32px;margin-bottom:28px">
-      <h3 style="color:#f1f5f9;font-size:20px;font-weight:700;margin-bottom:6px">Vision → Goals → Tactics: Know the Difference</h3>
-      <p style="color:#94a3b8;font-size:14px;margin-bottom:20px">The most successful agents don't just grind — they work with intention. Here's how to think about your business at three levels:</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
-        <div style="border-left:3px solid #a78bfa;padding:12px 16px;background:rgba(167,139,250,0.06);border-radius:0 8px 8px 0">
-          <div style="color:#a78bfa;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Vision</div>
-          <div style="color:#f1f5f9;font-size:16px;font-weight:600;margin-bottom:6px">Where you're going</div>
-          <p style="color:#cbd5e1;font-size:14px;line-height:1.5;margin:0">Your vision is the big picture — the future you're building toward. It doesn't change month to month. Example: <em>"I want to be the go-to agent for families relocating to the Denver metro, known for honest advice and local expertise."</em></p>
-        </div>
-        <div style="border-left:3px solid #2ecc71;padding:12px 16px;background:rgba(46,204,113,0.06);border-radius:0 8px 8px 0">
-          <div style="color:#2ecc71;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Goals</div>
-          <div style="color:#f1f5f9;font-size:16px;font-weight:600;margin-bottom:6px">What you're measuring</div>
-          <p style="color:#cbd5e1;font-size:14px;line-height:1.5;margin:0">Goals are specific, time-bound targets that move you toward your vision. They're how you know you're making progress. Example: <em>"Close 2 deals this quarter"</em> or <em>"Get 5 Google reviews this month"</em> or <em>"Reach 50% of my assigned leads."</em></p>
-        </div>
-        <div style="border-left:3px solid #fb923c;padding:12px 16px;background:rgba(251,146,60,0.06);border-radius:0 8px 8px 0">
-          <div style="color:#fb923c;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Tactics</div>
-          <div style="color:#f1f5f9;font-size:16px;font-weight:600;margin-bottom:6px">What you do every day</div>
-          <p style="color:#cbd5e1;font-size:14px;line-height:1.5;margin:0">Tactics are the daily and weekly actions that achieve your goals. They're small, repeatable, and controllable. Example: <em>"Post one selfie video per week"</em> or <em>"Text 5 past clients every Monday"</em> or <em>"Call 10 new leads within 5 minutes of assignment."</em></p>
-        </div>
+      <div style="background:var(--card,#1a1b2e);border:1px solid var(--border,#2d2f45);border-radius:12px;padding:24px;border-left:3px solid #a78bfa">
+        <div style="color:#a78bfa;font-size:14px;font-weight:700;margin-bottom:8px">KEEP YOUR STAGES UPDATED</div>
+        <p style="color:#e2e8f0;font-size:14px;line-height:1.6;margin:0">Move your leads through the stages as conversations happen: New → Attempted → Spoke → Nurture → Warm → Hot. Accurate stages help Brian coach you better and help the team see where the pipeline really stands.</p>
       </div>
-      <p style="color:#94a3b8;font-size:14px;margin-top:16px;margin-bottom:0;line-height:1.5"><strong style="color:#e2e8f0">The mistake most agents make:</strong> jumping straight to tactics without a vision or goals. You end up busy but not productive. The 5 actions below are <em>tactics</em> — but they only work when you connect them to <em>your</em> goals and <em>your</em> vision for where you want your career to go. Brian can help you define all three.</p>
-    </div>
-
-    <!-- Part 1C: Growing Your Sphere -->
-    <div style="background:var(--card,#1a1b2e);border:1px solid var(--border,#2d2f45);border-radius:12px;padding:28px 32px;margin-bottom:28px">
-      <h3 style="color:#f1f5f9;font-size:20px;font-weight:700;margin-bottom:4px">Growing Your Sphere — The Numbers Behind It</h3>
-      <p style="color:#94a3b8;font-size:14px;margin-bottom:20px">Right now, only 2% of Kenna's leads come from Sphere/Referral. Industry data says this should be your biggest source. Here's why — and how to grow it.</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:20px">
-        <div style="background:rgba(46,204,113,0.08);border-radius:10px;padding:16px">
-          <div style="color:#2ecc71;font-size:28px;font-weight:700">82%</div>
-          <p style="color:#e2e8f0;font-size:14px;margin:4px 0 0">of all real estate transactions come from repeat clients, referrals, friends, family, and personal contacts <span style="color:#94a3b8">(Buffini & Company)</span></p>
-        </div>
-        <div style="background:rgba(96,165,250,0.08);border-radius:10px;padding:16px">
-          <div style="color:#60a5fa;font-size:28px;font-weight:700">41%</div>
-          <p style="color:#e2e8f0;font-size:14px;margin:4px 0 0">of business for agents with 16+ years experience comes from repeat clients alone. The longer you invest in relationships, the less you need to prospect. <span style="color:#94a3b8">(NAR 2025 Member Profile)</span></p>
-        </div>
-        <div style="background:rgba(251,146,60,0.08);border-radius:10px;padding:16px">
-          <div style="color:#fb923c;font-size:28px;font-weight:700">80%</div>
-          <p style="color:#e2e8f0;font-size:14px;margin:4px 0 0">of real estate teams — small and large — say most of their deals come from SOI. Yet over half admit their SOI systems are only "basic." <span style="color:#94a3b8">(RealScout/HousingWire 2024)</span></p>
-        </div>
-      </div>
-      <h4 style="color:#f1f5f9;font-size:16px;font-weight:600;margin-bottom:12px">How to Grow Your Sphere from 0 to 200+</h4>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
-        <div style="padding:12px 16px;border-left:3px solid #2ecc71;background:rgba(46,204,113,0.04);border-radius:0 8px 8px 0">
-          <div style="color:#2ecc71;font-size:13px;font-weight:700;margin-bottom:4px">START: LIST EVERYONE YOU KNOW</div>
-          <p style="color:#cbd5e1;font-size:14px;line-height:1.5;margin:0">Past clients, friends, family, neighbors, your barber, your kids' teachers, your gym buddies. Most agents undercount their SOI. The average person knows 200+ people. Write them all down and add them to FUB with the "Sphere" source tag.</p>
-        </div>
-        <div style="padding:12px 16px;border-left:3px solid #60a5fa;background:rgba(96,165,250,0.04);border-radius:0 8px 8px 0">
-          <div style="color:#60a5fa;font-size:13px;font-weight:700;margin-bottom:4px">NURTURE: THE 3-TOUCH QUARTERLY PLAN</div>
-          <p style="color:#cbd5e1;font-size:14px;line-height:1.5;margin:0">Every quarter, each Sphere contact should get: 1 phone call (just catch up — don't pitch), 1 text checking in on their life, and 1 piece of value (market update, neighborhood stat, or event invite). FUB action plans can automate the reminders. <span style="color:#94a3b8">(FUB has a guide: followupboss.com/blog/spheres-influence)</span></p>
-        </div>
-        <div style="padding:12px 16px;border-left:3px solid #fb923c;background:rgba(251,146,60,0.04);border-radius:0 8px 8px 0">
-          <div style="color:#fb923c;font-size:13px;font-weight:700;margin-bottom:4px">ASK: THE REFERRAL CONVERSATION</div>
-          <p style="color:#cbd5e1;font-size:14px;line-height:1.5;margin:0">84% of people trust recommendations from people they know (Nielsen). But they won't refer you if they don't remember you're in real estate. After every closing and every meaningful conversation, say: "If you know anyone thinking about buying or selling, I'd love to help them too." Referred clients convert 30% better than cold leads. <span style="color:#94a3b8">(American Marketing Association)</span></p>
-        </div>
-        <div style="padding:12px 16px;border-left:3px solid #a78bfa;background:rgba(167,139,250,0.04);border-radius:0 8px 8px 0">
-          <div style="color:#a78bfa;font-size:13px;font-weight:700;margin-bottom:4px">EXPAND: ADD 2 NEW PEOPLE PER WEEK</div>
-          <p style="color:#cbd5e1;font-size:14px;line-height:1.5;margin:0">Meet someone at an open house? Add them. Chat with a vendor? Add them. Every new relationship is a potential referral. At 2 per week, that's 100+ new SOI contacts per year. Your network compounds — each new person knows 200 people you don't.</p>
-        </div>
-      </div>
-      <p style="color:#94a3b8;font-size:14px;margin-top:16px;margin-bottom:0"><strong style="color:#e2e8f0">The bottom line:</strong> Internet leads are the engine — 4,565 leads and growing. That volume is essential. But right now only 0.15% convert to closings, which means there's massive upside in improving how the team works those leads. At the same time, growing your Sphere adds a high-conversion channel on top — Sphere leads close at 7.5%, so even a small increase in referrals compounds fast. The winning formula: <strong style="color:#2ecc71">convert more internet leads AND grow your Sphere. Do both.</strong></p>
-    </div>
-
-    <!-- Part 2: 5 Tactics Every Agent Can Start This Month -->
-    <div class="brand-actions-header">
-      <h3 class="brand-actions-title">5 Tactics Every Agent Can Start This Month</h3>
-    </div>
-    <div class="brand-actions-list">
-      ${actionCards}
-    </div>
-
-    <!-- Part 3: How It Helps YOU -->
-    <div class="brand-helps-you">
-      <div class="brand-helps-you-title">How It Helps YOU</div>
-      <p class="brand-helps-you-text">Every relationship lead you bring in:</p>
-      <ul class="brand-helps-list">
-        <li>Costs <strong>$0</strong> in ad spend</li>
-        <li>Currently closes at a higher rate than online leads (which are still maturing)</li>
-        <li>Earns you <strong>full commission</strong> (no referral fee)</li>
-        <li>Builds <strong>YOUR reputation</strong> as the go-to agent in your community</li>
-        <li>Makes Brian's job easier — he can invest more in <strong>tools that help YOU</strong> while the team improves conversion on every channel</li>
-      </ul>
     </div>
   `;
 }
