@@ -368,6 +368,51 @@ const GA4_CHANNELS = [
   { channel: "SMS", sessions: 141, conversions: 4, engaged: 73, bounce_rate: 0.482 }
 ];
 
+const MONTHLY_DATA = [
+  {month:"Jul 2025", leads:575, reached:161},
+  {month:"Aug 2025", leads:598, reached:248},
+  {month:"Sep 2025", leads:585, reached:255},
+  {month:"Oct 2025", leads:508, reached:202},
+  {month:"Nov 2025", leads:373, reached:124},
+  {month:"Dec 2025", leads:491, reached:172},
+  {month:"Jan 2026", leads:855, reached:460},
+  {month:"Feb 2026", leads:832, reached:289},
+  {month:"Mar 2026*", leads:528, reached:145},
+];
+
+const FEB_AGENTS = [
+  {name:"Rona Lynn",leads:163},{name:"Tommy Reed",leads:144},
+  {name:"Tahverle & Beverly",leads:119},{name:"Lindsey Jenkins",leads:105},
+  {name:"Felicia Carter",leads:91},{name:"Brenna Lodge",leads:91},
+  {name:"Daniela Draper",leads:86},{name:"Brian Burke",leads:25},
+  {name:"Henry Chu",leads:6},{name:"Damon Chavez",leads:1},{name:"Jack Lang",leads:1}
+];
+
+const FEB_SOURCES = [
+  {source:"Google Organic",leads:433},{source:"Facebook Lead Ad",leads:112},
+  {source:"Google PPC",leads:96},{source:"RealtyNow",leads:81},
+  {source:"Direct Traffic",leads:29},{source:"kennarealestate.com",leads:27}
+];
+
+const HOT_VISITORS = [
+  {name:"Chen Yan",visits:284,agent:"Henry Chu",stage:"Nurture"},
+  {name:"Lisa Hinton",visits:155,agent:"Brenna Lodge",stage:"Warm"},
+  {name:"Tracie Holliday",visits:153,agent:"Tommy Reed",stage:"Nurture"},
+  {name:"Wendy Karpowicz",visits:83,agent:"Brian Burke",stage:"Warm"},
+  {name:"Samantha Dotson",visits:77,agent:"Tommy Reed",stage:"Warm — has deal"}
+];
+
+const FUN_STATS = [
+  {emoji:"📞",text:"2,000 calls made in 90 days"},
+  {emoji:"🕐",text:"6.4 hours of phone conversations"},
+  {emoji:"📝",text:"Brian wrote 1,931 notes — 21 per day"},
+  {emoji:"🏠",text:"Average deal: $543,820"},
+  {emoji:"💰",text:"Biggest deal: $1.4M (Jen Grauer)"},
+  {emoji:"📈",text:"20.3 new leads per day"},
+  {emoji:"🤖",text:"266 visitors found Kenna via ChatGPT"},
+  {emoji:"🐸",text:"Sphere leads close at 8.6% — your network is your net worth"}
+];
+
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 
 const STAGE_ORDER = ["New", "Attempted", "Spoke", "Nurture", "Warm", "Hot", "Pending", "Closed", "Archives"];
@@ -1089,7 +1134,7 @@ function renderBadges(agent) {
   if (badges.length === 0) return '';
   let html = `<div class="badges-section"><div class="badges-title">Achievement Badges</div><div class="badges-row">`;
   badges.forEach(b => {
-    html += `<span class="badge-pill" style="background:${b.color}"><img src="img/frog-head.png" class="badge-icon" alt=""> ${b.name}</span>`;
+    html += `<span class="badge-pill" style="background:${b.color}"><img src="img/badge-icon.png" class="badge-icon" alt=""> ${b.name}</span>`;
   });
   html += `</div></div>`;
   return html;
@@ -1118,10 +1163,221 @@ function renderSTLChips(agent) {
   `;
 }
 
+function renderMonthlyBreakdown() {
+  // Monthly lead volume table
+  let tableRows = '';
+  MONTHLY_DATA.forEach(m => {
+    const rate = Math.round((m.reached / m.leads) * 100);
+    let note = '';
+    if (m.month === 'Jan 2026') note = ' <span class="spike-label">← spike</span>';
+    if (m.month === 'Mar 2026*') note = ' <span class="partial-label">(*through Mar 20)</span>';
+    tableRows += `<tr>
+      <td>${m.month}</td>
+      <td>${fmt(m.leads)}</td>
+      <td>${fmt(m.reached)}</td>
+      <td>${rate}%${note}</td>
+    </tr>`;
+  });
+
+  return `
+    <hr class="section-divider">
+    <div id="monthly-trends" class="section-header">
+      <h2 class="section-title">Monthly Breakdown</h2>
+      <p class="section-subtitle">Lead volume and reach rates by month since migration</p>
+    </div>
+
+    <div class="monthly-grid">
+      <div class="source-panel">
+        <div class="source-panel-header">Monthly Lead Volume</div>
+        <table class="source-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>New Leads</th>
+              <th>Reached</th>
+              <th>Reach Rate</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+      <div class="source-panel">
+        <div class="source-panel-header">Monthly Leads vs Reached</div>
+        <div class="monthly-chart-wrapper">
+          <canvas id="monthlyChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="anomaly-callouts">
+      <div class="callout callout-teal">
+        <strong>January 2026</strong> saw a <strong>74% spike</strong> in leads (855 vs avg 530) — driven by a RealtyNow surge (89 leads on Jan 2 alone). The team responded well: <strong>54% reach rate</strong>, the highest month on record.
+      </div>
+      <div class="callout callout-orange">
+        <strong>March 2026:</strong> Felicia (ISA) is receiving <strong>40% of all new leads</strong> this month (211 of 528) — she's being used as the front-line lead handler. Monitor her capacity.
+      </div>
+    </div>
+  `;
+}
+
+function initMonthlyChart() {
+  const ctx = document.getElementById('monthlyChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: MONTHLY_DATA.map(m => m.month),
+      datasets: [
+        {
+          label: 'New Leads',
+          data: MONTHLY_DATA.map(m => m.leads),
+          backgroundColor: '#60a5fa',
+          borderRadius: 4,
+          borderSkipped: false,
+          barPercentage: 0.8,
+          categoryPercentage: 0.7
+        },
+        {
+          label: 'Reached',
+          data: MONTHLY_DATA.map(m => m.reached),
+          backgroundColor: '#2ecc71',
+          borderRadius: 4,
+          borderSkipped: false,
+          barPercentage: 0.8,
+          categoryPercentage: 0.7
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: { color: '#94a3b8', font: { size: 12, family: 'Inter' }, boxWidth: 12, padding: 16 }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => ctx.dataset.label + ': ' + fmt(ctx.raw)
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#94a3b8', font: { size: 11, family: 'Inter' }, maxRotation: 45 }
+        },
+        y: {
+          grid: { color: 'rgba(45,47,69,0.5)' },
+          ticks: { color: '#94a3b8', font: { size: 12, family: 'Inter' } },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+function renderLastMonth() {
+  // Feb agents horizontal bar
+  let agentItems = '';
+  const maxLeads = FEB_AGENTS[0].leads;
+  FEB_AGENTS.forEach(a => {
+    const pctWidth = Math.max((a.leads / maxLeads) * 100, 2);
+    agentItems += `
+      <div class="hbar-row">
+        <span class="hbar-label">${a.name}</span>
+        <div class="hbar-track">
+          <div class="hbar-fill" style="width:${pctWidth}%;background:var(--blue)"></div>
+        </div>
+        <span class="hbar-value">${a.leads}</span>
+      </div>`;
+  });
+
+  let sourceItems = '';
+  const maxSrc = FEB_SOURCES[0].leads;
+  FEB_SOURCES.forEach(s => {
+    const pctWidth = Math.max((s.leads / maxSrc) * 100, 2);
+    sourceItems += `
+      <div class="hbar-row">
+        <span class="hbar-label">${s.source}</span>
+        <div class="hbar-track">
+          <div class="hbar-fill" style="width:${pctWidth}%;background:var(--teal)"></div>
+        </div>
+        <span class="hbar-value">${s.leads}</span>
+      </div>`;
+  });
+
+  return `
+    <div class="last-month-section">
+      <div class="section-header">
+        <h3 class="section-title" style="font-size:18px">February 2026 — Last Full Month</h3>
+      </div>
+      <div class="last-month-grid">
+        <div class="source-panel" style="padding:20px">
+          <div class="source-panel-header" style="padding:0;margin-bottom:16px">Lead Distribution by Agent (Feb)</div>
+          <div class="hbar-list">${agentItems}</div>
+        </div>
+        <div class="source-panel" style="padding:20px">
+          <div class="source-panel-header" style="padding:0;margin-bottom:16px">Lead Sources (Feb)</div>
+          <div class="hbar-list">${sourceItems}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderInsights() {
+  let visitorRows = '';
+  HOT_VISITORS.forEach(v => {
+    visitorRows += `<li><strong>${v.name}</strong>: ${v.visits} visits (${v.agent}’s lead, ${v.stage})</li>`;
+  });
+
+  return `
+    <hr class="section-divider">
+    <div id="insights" class="section-header">
+      <h2 class="section-title">Hidden Gems &amp; Anomalies</h2>
+      <p class="section-subtitle">Patterns and opportunities hiding in the data</p>
+    </div>
+    <div class="insights-grid">
+      <div class="insight-card insight-teal">
+        <div class="insight-card-title">🔥 Hot Leads Hiding in Plain Sight</div>
+        <p class="insight-text"><strong>238 leads</strong> have visited kennarealestate.com <strong>10+ times</strong>. These people keep coming back — they're actively shopping.</p>
+        <div class="insight-subhead">Top 5 by Website Visits:</div>
+        <ol class="insight-list">${visitorRows}</ol>
+        <p class="insight-note">Sort by website visits in FUB to find your most engaged prospects.</p>
+      </div>
+      <div class="insight-card insight-orange">
+        <div class="insight-card-title">👻 Closed Without a Call</div>
+        <p class="insight-text"><strong>6 people</strong> who closed deals were still tagged “First Call Never Made” in FUB. They transacted through other channels (text, email, in-person) but FUB thinks they were never called.</p>
+        <p class="insight-text">This suggests the team is doing <strong>more work than FUB captures</strong>. Consider logging all touchpoints.</p>
+      </div>
+      <div class="insight-card insight-gold">
+        <div class="insight-card-title">🌟 The 25 Golden Leads</div>
+        <p class="insight-text"><strong>25 leads</strong> respond to BOTH text AND email — they’re engaged on multiple channels. These are your highest-intent prospects.</p>
+        <p class="insight-text">Industry data: multi-channel responsive leads convert <strong>3–5x higher</strong> than single-channel.</p>
+      </div>
+    </div>
+  `;
+}
+
+function renderFunStats() {
+  let pills = '';
+  FUN_STATS.forEach(s => {
+    pills += `<div class="fun-stat-pill"><span class="fun-stat-emoji">${s.emoji}</span> ${s.text}</div>`;
+  });
+  return `
+    <div class="fun-stats-section">
+      <div class="fun-stats-title">Fun Stats</div>
+      <div class="fun-stats-row">${pills}</div>
+    </div>
+  `;
+}
+
 function renderFooter() {
   return `
     <footer class="footer">
       <div><a href="https://yourbrand.io">Prepared by YourBrand.io</a></div>
+
     </footer>
   `;
 }
@@ -1136,12 +1392,17 @@ document.addEventListener("DOMContentLoaded", () => {
       ${renderTeamOverview()}
       ${renderFunnelChart()}
       ${renderPathToClose()}
+      ${renderMonthlyBreakdown()}
+      ${renderLastMonth()}
       ${renderAgentCards()}
       ${renderLeadSources()}
+      ${renderInsights()}
       ${renderCoachingPriorities()}
+      ${renderFunStats()}
     </div>
     ${renderFooter()}
   `;
 
   initFunnelChart();
+  initMonthlyChart();
 });
