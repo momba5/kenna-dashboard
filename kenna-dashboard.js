@@ -1601,7 +1601,7 @@ function renderBuildTheBrand() {
           <p style="color:#cbd5e1;font-size:14px;line-height:1.5;margin:0">Meet someone at an open house? Add them. Chat with a vendor? Add them. Every new relationship is a potential referral. At 2 per week, that's 100+ new SOI contacts per year. Your network compounds — each new person knows 200 people you don't.</p>
         </div>
       </div>
-      <p style="color:#94a3b8;font-size:14px;margin-top:16px;margin-bottom:0"><strong style="color:#e2e8f0">The bottom line:</strong> Kenna's Sphere leads close at 7.5%. Online leads close at 0.15%. Every hour you invest in relationships returns more than any hour spent chasing internet leads. The internet leads matter — they fill the funnel — but your Sphere is where the closings come from.</p>
+      <p style="color:#94a3b8;font-size:14px;margin-top:16px;margin-bottom:0"><strong style="color:#e2e8f0">The bottom line:</strong> Internet leads are the engine — 4,565 leads and growing. That volume is essential. But right now only 0.15% convert to closings, which means there's massive upside in improving how the team works those leads. At the same time, growing your Sphere adds a high-conversion channel on top — Sphere leads close at 7.5%, so even a small increase in referrals compounds fast. The winning formula: <strong style="color:#2ecc71">convert more internet leads AND grow your Sphere. Do both.</strong></p>
     </div>
 
     <!-- Part 2: 5 Tactics Every Agent Can Start This Month -->
