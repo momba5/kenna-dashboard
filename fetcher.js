@@ -131,6 +131,22 @@ async function fetchAllData(config) {
   // require per-person queries and /notes returns 168K+ records.
   // All three are skipped; earliest outbound call is used instead.
 
+  // Diagnostic: log sample records to identify field names
+  console.log('=== DIAGNOSTIC: Sample user ===');
+  if (users.length) console.log(JSON.stringify(users[0], null, 2));
+  console.log('=== DIAGNOSTIC: Sample person (3) ===');
+  people.slice(0, 3).forEach((p, i) => console.log(`Person ${i}:`, JSON.stringify(p, null, 2)));
+  console.log('=== DIAGNOSTIC: Sample call (3) ===');
+  calls.slice(0, 3).forEach((c, i) => console.log(`Call ${i}:`, JSON.stringify(c, null, 2)));
+  console.log('=== DIAGNOSTIC: Sample appointment (3) ===');
+  appointments.slice(0, 3).forEach((a, i) => console.log(`Appt ${i}:`, JSON.stringify(a, null, 2)));
+  console.log('=== DIAGNOSTIC: Sample deal (3) ===');
+  deals.slice(0, 3).forEach((d, i) => console.log(`Deal ${i}:`, JSON.stringify(d, null, 2)));
+  // Log a closed deal specifically
+  const closedSample = deals.find(d => (d.stage || d.stageName || d.status || '').toLowerCase().includes('clos'));
+  if (closedSample) console.log('=== DIAGNOSTIC: Closed deal sample ===', JSON.stringify(closedSample, null, 2));
+  else console.log('=== DIAGNOSTIC: No deal with "clos" in stage/stageName/status found. Deal stages:', [...new Set(deals.map(d => d.stage || d.stageName || d.status || 'NONE'))]);
+
   // Build computed metrics
   console.log('Computing metrics...');
   return computeMetrics({ users, people, calls, appointments, deals }, config);
