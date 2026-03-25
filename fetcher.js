@@ -135,9 +135,21 @@ async function fetchAllData(config) {
   console.log('Pulling /emails...');
   const emails = await tryFetchAllPages('/emails', apiKey, { sort: 'created', 'created[gte]': sinceStr });
 
-  // Step 8: Fetch notes as fallback for text/email activity
-  console.log('Pulling /notes...');
-  const notes = await tryFetchAllPages('/notes', apiKey, { sort: 'created', 'created[gte]': sinceStr });
+  // Step 8: Only pull notes if both textMessages AND emails returned empty.
+  // Notes can contain 100K+ records and are only needed as a fallback
+  // for speed-to-lead text/email detection.
+  let notes = [];
+  if (textMessages.length === 0 && emails.length === 0) {
+    console.log('Pulling /notes (fallback — textMessages and emails were empty)...');
+    notes = await tryFetchAllPages('/notes', apiKey, { sort: 'created', 'created[gte]': sinceStr });
+    // If still too many, cap to avoid memory issues
+    if (notes.length > 50000) {
+      console.warn(`  Notes returned ${notes.length} records — truncating to most recent 50,000`);
+      notes = notes.slice(-50000);
+    }
+  } else {
+    console.log('Skipping /notes — textMessages and/or emails endpoints returned data');
+  }
 
   // Build computed metrics
   console.log('Computing metrics...');
