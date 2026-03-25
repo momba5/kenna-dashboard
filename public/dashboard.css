@@ -1,0 +1,852 @@
+/* Kenna Real Estate Group — Team Performance Dashboard */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* ------------------------------------------------------------------ */
+/* Reset & base                                                       */
+/* ------------------------------------------------------------------ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #1d2c35;
+  --bg-card: rgba(255,255,255,0.04);
+  --bg-card-hover: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.08);
+  --border-light: rgba(255,255,255,0.12);
+  --teal: #039ba9;
+  --teal-dim: rgba(3,155,169,0.15);
+  --link: #23627d;
+  --white: #ffffff;
+  --white-80: rgba(255,255,255,0.8);
+  --white-60: rgba(255,255,255,0.6);
+  --white-40: rgba(255,255,255,0.4);
+  --white-20: rgba(255,255,255,0.2);
+  --amber: #ef9f27;
+  --amber-dim: rgba(239,159,39,0.1);
+  --green: #2ecc71;
+  --red: #f87171;
+  --font: 'Inter', sans-serif;
+
+  /* Stage colors */
+  --stage-new: #60a5fa;
+  --stage-attempted: #fb923c;
+  --stage-nurture: #a78bfa;
+  --stage-warm: #fbbf24;
+  --stage-hot: #f87171;
+  --stage-spoke: #22d3ee;
+  --stage-pending: #f472b6;
+  --stage-archives: #475569;
+  --stage-closed: #2ecc71;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--white);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--teal); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ------------------------------------------------------------------ */
+/* Header                                                             */
+/* ------------------------------------------------------------------ */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 32px;
+  background: rgba(29,44,53,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-logo { height: 40px; }
+
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--white);
+  text-align: center;
+}
+
+.header-meta {
+  font-size: 12px;
+  color: var(--white-40);
+  text-align: right;
+  line-height: 1.4;
+}
+
+/* ------------------------------------------------------------------ */
+/* Stale data warning banner                                          */
+/* ------------------------------------------------------------------ */
+.stale-banner {
+  background: var(--amber-dim);
+  border-bottom: 1px solid rgba(239,159,39,0.3);
+  padding: 10px 32px;
+  text-align: center;
+  color: var(--amber);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------ */
+/* Nav                                                                */
+/* ------------------------------------------------------------------ */
+.nav {
+  position: sticky;
+  top: 65px;
+  z-index: 99;
+  display: flex;
+  gap: 4px;
+  padding: 8px 32px;
+  background: rgba(29,44,53,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.nav a {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--white-60);
+  border-radius: 6px;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.nav a:hover, .nav a.active {
+  background: var(--teal-dim);
+  color: var(--teal);
+}
+
+/* ------------------------------------------------------------------ */
+/* Layout                                                             */
+/* ------------------------------------------------------------------ */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 32px 80px;
+}
+
+.section {
+  margin-bottom: 48px;
+}
+
+.section-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.section-subtitle {
+  font-size: 14px;
+  color: var(--white-40);
+  margin-bottom: 24px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Cards                                                              */
+/* ------------------------------------------------------------------ */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  transition: background 0.2s;
+}
+
+.card:hover {
+  background: var(--bg-card-hover);
+}
+
+/* ------------------------------------------------------------------ */
+/* KPI grid                                                           */
+/* ------------------------------------------------------------------ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.kpi-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+}
+
+.kpi-value {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--white);
+  line-height: 1.1;
+}
+
+.kpi-value.green { color: var(--green); }
+.kpi-value.amber { color: var(--amber); }
+.kpi-value.red { color: var(--red); }
+.kpi-value.teal { color: var(--teal); }
+
+.kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--white-40);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 6px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Progress bar                                                       */
+/* ------------------------------------------------------------------ */
+.progress-wrap {
+  background: rgba(255,255,255,0.06);
+  border-radius: 8px;
+  height: 12px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 8px;
+  background: var(--teal);
+  transition: width 0.6s ease;
+}
+
+.progress-bar.over { background: var(--green); }
+.progress-bar.under { background: var(--amber); }
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--white-60);
+  margin-top: 4px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Funnel                                                             */
+/* ------------------------------------------------------------------ */
+.funnel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.funnel-stage {
+  text-align: center;
+  padding: 16px 12px;
+  min-width: 100px;
+}
+
+.funnel-count {
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.funnel-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--white-40);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.funnel-arrow {
+  color: var(--white-20);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.funnel-drop {
+  font-size: 10px;
+  color: var(--amber);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Tables                                                             */
+/* ------------------------------------------------------------------ */
+.table-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th {
+  background: rgba(255,255,255,0.04);
+  padding: 12px 14px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--white-60);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+tr:last-child td { border-bottom: none; }
+
+tr:hover td { background: rgba(255,255,255,0.02); }
+
+.heat-low { background: rgba(239,159,39,0.08); }
+.heat-med { background: rgba(3,155,169,0.08); }
+.heat-high { background: rgba(46,204,113,0.12); }
+
+/* ------------------------------------------------------------------ */
+/* Status chips                                                       */
+/* ------------------------------------------------------------------ */
+.chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.chip-green { background: rgba(46,204,113,0.15); color: var(--green); }
+.chip-amber { background: rgba(239,159,39,0.15); color: var(--amber); }
+.chip-red { background: rgba(248,113,113,0.15); color: var(--red); }
+.chip-teal { background: var(--teal-dim); color: var(--teal); }
+
+/* ------------------------------------------------------------------ */
+/* Agent scorecard                                                    */
+/* ------------------------------------------------------------------ */
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 20px;
+}
+
+.agent-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  transition: background 0.2s;
+}
+
+.agent-card:hover { background: var(--bg-card-hover); }
+
+.agent-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.agent-name {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.role-badge {
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.role-badge.agent { background: var(--teal-dim); color: var(--teal); }
+.role-badge.isa { background: rgba(164,131,250,0.15); color: #a78bfa; }
+.role-badge.leader { background: rgba(251,191,36,0.15); color: #fbbf24; }
+
+.agent-summary {
+  font-size: 13px;
+  color: var(--white-60);
+  margin-bottom: 16px;
+}
+
+.agent-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.agent-kpi {
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.agent-kpi-value {
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.agent-kpi-label {
+  font-size: 10px;
+  color: var(--white-40);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-top: 2px;
+}
+
+/* Agent funnel */
+.agent-funnel {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 16px;
+  font-size: 12px;
+}
+
+.agent-funnel-step {
+  text-align: center;
+  flex: 1;
+  padding: 8px 4px;
+}
+
+.agent-funnel-count {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.agent-funnel-label {
+  font-size: 9px;
+  color: var(--white-40);
+  text-transform: uppercase;
+}
+
+.agent-funnel-arrow {
+  color: var(--white-20);
+  font-size: 14px;
+}
+
+/* Stage distribution bar */
+.stage-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.stage-bar-segment {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+/* Activity chips row */
+.activity-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+/* Coaching insight on agent card */
+.agent-insight {
+  background: rgba(3,155,169,0.06);
+  border-left: 3px solid var(--teal);
+  border-radius: 0 8px 8px 0;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--white-80);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+/* Badges */
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.badge img {
+  width: 14px;
+  height: 14px;
+}
+
+.badge-gold { background: rgba(251,191,36,0.15); color: #fbbf24; }
+.badge-silver { background: rgba(192,192,192,0.15); color: #c0c0c0; }
+.badge-bronze { background: rgba(205,127,50,0.15); color: #cd7f32; }
+
+/* ------------------------------------------------------------------ */
+/* Winning path timeline                                              */
+/* ------------------------------------------------------------------ */
+.timeline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  padding: 20px 0;
+  overflow-x: auto;
+}
+
+.timeline-step {
+  text-align: center;
+  min-width: 130px;
+  position: relative;
+}
+
+.timeline-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--teal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--white);
+}
+
+.timeline-value {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--white);
+}
+
+.timeline-label {
+  font-size: 11px;
+  color: var(--white-40);
+  margin-top: 2px;
+}
+
+.timeline-connector {
+  width: 40px;
+  height: 2px;
+  background: var(--teal);
+  align-self: center;
+  margin-top: -30px;
+  flex-shrink: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Anomaly cards                                                      */
+/* ------------------------------------------------------------------ */
+.anomaly-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--amber);
+  border-radius: 0 12px 12px 0;
+  padding: 20px 24px;
+}
+
+.anomaly-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--amber);
+  margin-bottom: 4px;
+}
+
+.anomaly-who {
+  font-size: 12px;
+  color: var(--white-60);
+  margin-bottom: 8px;
+}
+
+.anomaly-body {
+  font-size: 13px;
+  color: var(--white-80);
+  line-height: 1.5;
+}
+
+.anomaly-starter {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--teal);
+  font-style: italic;
+}
+
+/* ------------------------------------------------------------------ */
+/* Coaching priority cards                                            */
+/* ------------------------------------------------------------------ */
+.coaching-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--teal);
+  border-radius: 0 12px 12px 0;
+  padding: 20px 24px;
+  display: flex;
+  gap: 16px;
+}
+
+.coaching-number {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--teal);
+  flex-shrink: 0;
+  width: 36px;
+}
+
+.coaching-body {
+  font-size: 13px;
+  color: var(--white-80);
+  line-height: 1.6;
+}
+
+/* ------------------------------------------------------------------ */
+/* Pipeline opportunity                                               */
+/* ------------------------------------------------------------------ */
+.pipeline-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.pipeline-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+}
+
+.pipeline-count {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--white);
+}
+
+.pipeline-label {
+  font-size: 12px;
+  color: var(--white-40);
+  margin-top: 2px;
+}
+
+.pipeline-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green);
+  margin-top: 6px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Reminder cards                                                     */
+/* ------------------------------------------------------------------ */
+.reminder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.reminder-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.reminder-emoji {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.reminder-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.reminder-desc {
+  font-size: 13px;
+  color: var(--white-60);
+  line-height: 1.4;
+}
+
+/* ------------------------------------------------------------------ */
+/* Fun stats marquee                                                  */
+/* ------------------------------------------------------------------ */
+.fun-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(29,44,53,0.95);
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+  height: 40px;
+  z-index: 100;
+}
+
+.fun-track {
+  display: flex;
+  gap: 32px;
+  animation: marquee 30s linear infinite;
+  padding: 8px 0;
+  width: max-content;
+}
+
+.fun-pill {
+  flex-shrink: 0;
+  padding: 4px 16px;
+  background: var(--teal-dim);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--teal);
+  white-space: nowrap;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ------------------------------------------------------------------ */
+/* Law of averages table                                              */
+/* ------------------------------------------------------------------ */
+.loa-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.loa-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+
+.loa-ratio {
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.loa-label {
+  font-size: 11px;
+  color: var(--white-40);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Claude insight narrative blocks                                    */
+/* ------------------------------------------------------------------ */
+.insight-block {
+  background: rgba(3,155,169,0.04);
+  border: 1px solid rgba(3,155,169,0.12);
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 20px;
+}
+
+.insight-block p {
+  font-size: 14px;
+  color: var(--white-80);
+  line-height: 1.7;
+  margin-bottom: 8px;
+}
+
+.insight-block p:last-child { margin-bottom: 0; }
+
+.insight-frog {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+}
+
+/* ------------------------------------------------------------------ */
+/* No data state                                                      */
+/* ------------------------------------------------------------------ */
+.no-data {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.no-data h2 {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.no-data p {
+  color: var(--white-40);
+  font-size: 14px;
+  max-width: 400px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.no-data .refresh-btn {
+  display: inline-block;
+  margin-top: 24px;
+  padding: 12px 28px;
+  background: var(--teal);
+  color: var(--white);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s;
+}
+
+.no-data .refresh-btn:hover { background: #02838f; }
+
+/* ------------------------------------------------------------------ */
+/* Responsive                                                         */
+/* ------------------------------------------------------------------ */
+@media (max-width: 768px) {
+  .header { padding: 10px 16px; }
+  .header-title { font-size: 14px; }
+  .nav { padding: 6px 16px; }
+  .container { padding: 16px; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .agent-grid { grid-template-columns: 1fr; }
+  .agent-kpis { grid-template-columns: repeat(2, 1fr); }
+  .funnel { flex-direction: column; }
+  .funnel-arrow { transform: rotate(90deg); }
+  .timeline { flex-direction: column; align-items: center; }
+  .timeline-connector { width: 2px; height: 24px; margin: 0; }
+  .pipeline-grid { grid-template-columns: repeat(2, 1fr); }
+  .coaching-card { flex-direction: column; gap: 8px; }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr; }
+  .agent-kpis { grid-template-columns: 1fr; }
+  .pipeline-grid { grid-template-columns: 1fr; }
+}

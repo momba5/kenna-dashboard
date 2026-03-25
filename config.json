@@ -1,0 +1,23 @@
+{
+  "period_days": 90,
+  "targets": {
+    "calls_per_week_agent": 500,
+    "calls_per_week_isa": 800,
+    "conversations_per_week": 30,
+    "closings_per_month": 2,
+    "lead_to_close_per_100": 2,
+    "speed_to_lead_minutes": 5,
+    "lender_referral_rate_pct": 80
+  },
+  "thresholds": {
+    "never_called_warning": 20,
+    "stale_lead_days": 30,
+    "low_activity_calls_per_week": 50,
+    "high_cpa_warning": 80,
+    "low_reach_rate_pct": 40,
+    "data_stale_warning_days": 8,
+    "anomaly_ratio_multiplier": 2
+  },
+  "refresh_schedule": "0 6 * * 1",
+  "isa_role_names": ["ISA", "Inside Sales", "Inside Sales Agent"]
+}
