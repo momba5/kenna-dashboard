@@ -61,7 +61,7 @@ async function fetchAllPages(endpoint, apiKey, params = {}) {
   while (nextUrl) {
     const resp = await fubRequest(nextUrl, apiKey);
     const items = resp.people || resp.calls || resp.appointments || resp.deals ||
-                  resp.users || resp.notes || resp.textMessages || resp.emails ||
+                  resp.users ||
                   resp.events || resp.tasks || [];
     records.push(...items);
 
@@ -127,40 +127,20 @@ async function fetchAllData(config) {
   console.log('Pulling /deals...');
   const deals = await fetchAllPages('/deals', apiKey);
 
-  // Step 6: Fetch text messages (try endpoint, fall back gracefully)
-  console.log('Pulling /textMessages...');
-  const textMessages = await tryFetchAllPages('/textMessages', apiKey, { sort: 'created', 'created[gte]': sinceStr });
-
-  // Step 7: Fetch emails (try endpoint, fall back gracefully)
-  console.log('Pulling /emails...');
-  const emails = await tryFetchAllPages('/emails', apiKey, { sort: 'created', 'created[gte]': sinceStr });
-
-  // Step 8: Only pull notes if both textMessages AND emails returned empty.
-  // Notes can contain 100K+ records and are only needed as a fallback
-  // for speed-to-lead text/email detection.
-  let notes = [];
-  if (textMessages.length === 0 && emails.length === 0) {
-    console.log('Pulling /notes (fallback — textMessages and emails were empty)...');
-    notes = await tryFetchAllPages('/notes', apiKey, { sort: 'created', 'created[gte]': sinceStr });
-    // If still too many, cap to avoid memory issues
-    if (notes.length > 50000) {
-      console.warn(`  Notes returned ${notes.length} records — truncating to most recent 50,000`);
-      notes = notes.slice(-50000);
-    }
-  } else {
-    console.log('Skipping /notes — textMessages and/or emails endpoints returned data');
-  }
+  // Speed to lead uses outbound calls only — /textMessages and /emails
+  // require per-person queries and /notes returns 168K+ records.
+  // All three are skipped; earliest outbound call is used instead.
 
   // Build computed metrics
   console.log('Computing metrics...');
-  return computeMetrics({ users, people, calls, appointments, deals, textMessages, emails, notes }, config);
+  return computeMetrics({ users, people, calls, appointments, deals }, config);
 }
 
 // ---------------------------------------------------------------------------
 // Metric computation
 // ---------------------------------------------------------------------------
 function computeMetrics(raw, config) {
-  const { users, people, calls, appointments, deals, textMessages, emails, notes } = raw;
+  const { users, people, calls, appointments, deals } = raw;
   const periodDays = config.period_days || 90;
   const thresholds = config.thresholds || {};
   const targets = config.targets || {};
@@ -244,45 +224,11 @@ function computeMetrics(raw, config) {
     }
   }
 
-  // ---- Index texts/emails/notes by personId for speed to lead ----
-  const outboundByPerson = {}; // personId → [{ type, created }]
-  for (const t of textMessages) {
-    if (t.personId && (t.direction === 'outbound' || t.type === 'outbound')) {
-      if (!outboundByPerson[t.personId]) outboundByPerson[t.personId] = [];
-      outboundByPerson[t.personId].push({ type: 'text', created: t.created || t.dateCreated });
-    }
-  }
-  for (const e of emails) {
-    if (e.personId && (e.direction === 'outbound' || e.type === 'outbound')) {
-      if (!outboundByPerson[e.personId]) outboundByPerson[e.personId] = [];
-      outboundByPerson[e.personId].push({ type: 'email', created: e.created || e.dateCreated });
-    }
-  }
-  // Notes fallback for text/email
-  for (const n of notes) {
-    if (!n.personId) continue;
-    const nType = (n.type || '').toLowerCase();
-    if (nType.includes('text') || nType.includes('email') || nType.includes('sms')) {
-      if (!outboundByPerson[n.personId]) outboundByPerson[n.personId] = [];
-      outboundByPerson[n.personId].push({ type: nType.includes('text') || nType.includes('sms') ? 'text' : 'email', created: n.created });
-    }
-  }
-
-  // ---- Index inbound activity by personId (for never_responded detection) ----
+  // ---- Index inbound calls by personId (for never_responded detection) ----
   const inboundByPerson = {};
   for (const c of calls) {
     if (c.personId && (c.type === 'inbound' || c.direction === 'inbound')) {
       inboundByPerson[c.personId] = true;
-    }
-  }
-  for (const t of textMessages) {
-    if (t.personId && (t.direction === 'inbound' || t.type === 'inbound')) {
-      inboundByPerson[t.personId] = true;
-    }
-  }
-  for (const e of emails) {
-    if (e.personId && (e.direction === 'inbound' || e.type === 'inbound')) {
-      inboundByPerson[e.personId] = true;
     }
   }
 
@@ -344,11 +290,8 @@ function computeMetrics(raw, config) {
       agent.never_responded_count++;
     }
 
-    // Responds by text / email
-    const personTexts = (textMessages || []).filter(t => t.personId === p.id && (t.direction === 'inbound' || t.type === 'inbound'));
-    const personEmails = (emails || []).filter(e => e.personId === p.id && (e.direction === 'inbound' || e.type === 'inbound'));
-    if (personTexts.length > 0) agent.responds_text_count++;
-    if (personEmails.length > 0) agent.responds_email_count++;
+    // Responds by text / email — not available without per-person API calls
+    // These counts remain at 0; can be enabled if FUB adds global endpoints
 
     // Quality lead (has 1+ appointment)
     const personAppts = apptsByPerson[p.id] || [];
@@ -372,21 +315,13 @@ function computeMetrics(raw, config) {
       }
     }
 
-    // Speed to lead — find earliest outbound activity
+    // Speed to lead — find earliest outbound call
     const leadCreated = new Date(p.created || p.dateCreated);
     let earliestOutbound = null;
 
-    // Check outbound calls
     for (const c of outboundCalls) {
       const cDate = new Date(c.created || c.dateCreated);
       if (!earliestOutbound || cDate < earliestOutbound) earliestOutbound = cDate;
-    }
-
-    // Check outbound texts/emails/notes
-    const personOutbound = outboundByPerson[p.id] || [];
-    for (const o of personOutbound) {
-      const oDate = new Date(o.created);
-      if (!earliestOutbound || oDate < earliestOutbound) earliestOutbound = oDate;
     }
 
     if (earliestOutbound && earliestOutbound > leadCreated) {
