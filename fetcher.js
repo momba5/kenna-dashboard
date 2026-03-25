@@ -131,22 +131,6 @@ async function fetchAllData(config) {
   // require per-person queries and /notes returns 168K+ records.
   // All three are skipped; earliest outbound call is used instead.
 
-  // Diagnostic: log sample records to identify field names
-  console.log('=== DIAGNOSTIC: Sample user ===');
-  if (users.length) console.log(JSON.stringify(users[0], null, 2));
-  console.log('=== DIAGNOSTIC: Sample person (3) ===');
-  people.slice(0, 3).forEach((p, i) => console.log(`Person ${i}:`, JSON.stringify(p, null, 2)));
-  console.log('=== DIAGNOSTIC: Sample call (3) ===');
-  calls.slice(0, 3).forEach((c, i) => console.log(`Call ${i}:`, JSON.stringify(c, null, 2)));
-  console.log('=== DIAGNOSTIC: Sample appointment (3) ===');
-  appointments.slice(0, 3).forEach((a, i) => console.log(`Appt ${i}:`, JSON.stringify(a, null, 2)));
-  console.log('=== DIAGNOSTIC: Sample deal (3) ===');
-  deals.slice(0, 3).forEach((d, i) => console.log(`Deal ${i}:`, JSON.stringify(d, null, 2)));
-  // Log a closed deal specifically
-  const closedSample = deals.find(d => (d.stage || d.stageName || d.status || '').toLowerCase().includes('clos'));
-  if (closedSample) console.log('=== DIAGNOSTIC: Closed deal sample ===', JSON.stringify(closedSample, null, 2));
-  else console.log('=== DIAGNOSTIC: No deal with "clos" in stage/stageName/status found. Deal stages:', [...new Set(deals.map(d => d.stage || d.stageName || d.status || 'NONE'))]);
-
   // Build computed metrics
   console.log('Computing metrics...');
   return computeMetrics({ users, people, calls, appointments, deals }, config);
@@ -205,45 +189,48 @@ function computeMetrics(raw, config) {
   }
 
   // ---- Index calls by personId for quick lookup ----
+  // FUB calls use: personId (number), userId (number), isIncoming (boolean), duration (seconds)
   const callsByPerson = {};
-  const callsByAgent = {};
   for (const c of calls) {
     const pid = c.personId;
-    const uid = c.userId;
     if (pid) {
       if (!callsByPerson[pid]) callsByPerson[pid] = [];
       callsByPerson[pid].push(c);
     }
-    if (uid) {
-      if (!callsByAgent[uid]) callsByAgent[uid] = [];
-      callsByAgent[uid].push(c);
-    }
   }
 
-  // ---- Index appointments by personId ----
-  const apptsByPerson = {};
+  // ---- Index appointments by createdById (agent who created) ----
+  // FUB appointments have: createdById (user ID), invitees (array), no personId
+  // We index by createdById for agent-level counting
+  const apptsByAgent = {};
+  let totalAppointments = 0;
   for (const a of appointments) {
-    const pid = a.personId;
-    if (pid) {
-      if (!apptsByPerson[pid]) apptsByPerson[pid] = [];
-      apptsByPerson[pid].push(a);
+    const uid = a.createdById;
+    if (uid) {
+      if (!apptsByAgent[uid]) apptsByAgent[uid] = [];
+      apptsByAgent[uid].push(a);
+      totalAppointments++;
     }
   }
 
-  // ---- Index deals by personId ----
-  const dealsByPerson = {};
+  // ---- Index deals by user ID from users array ----
+  // FUB deals have: users[{id, name}], people[], stageName, price, commissionValue
+  const dealsByAgent = {};
   for (const d of deals) {
-    const pid = d.personId;
-    if (pid) {
-      if (!dealsByPerson[pid]) dealsByPerson[pid] = [];
-      dealsByPerson[pid].push(d);
+    const dealUsers = d.users || [];
+    for (const du of dealUsers) {
+      if (du.id) {
+        if (!dealsByAgent[du.id]) dealsByAgent[du.id] = [];
+        dealsByAgent[du.id].push(d);
+      }
     }
   }
 
   // ---- Index inbound calls by personId (for never_responded detection) ----
+  // FUB: isIncoming === true means inbound
   const inboundByPerson = {};
   for (const c of calls) {
-    if (c.personId && (c.type === 'inbound' || c.direction === 'inbound')) {
+    if (c.personId && c.isIncoming === true) {
       inboundByPerson[c.personId] = true;
     }
   }
@@ -253,7 +240,8 @@ function computeMetrics(raw, config) {
 
   // ---- Process people (leads) ----
   for (const p of people) {
-    const agentId = p.assignedTo || p.assignedUserId;
+    // FUB: assignedUserId is the numeric ID, assignedTo is the name string
+    const agentId = p.assignedUserId;
     const agent = agentMap[agentId];
     if (!agent) continue;
 
@@ -286,9 +274,10 @@ function computeMetrics(raw, config) {
     }
 
     // Check if lead was reached (has any connected outbound call)
+    // FUB: isIncoming=false means outbound, duration>0 means connected
     const personCalls = callsByPerson[p.id] || [];
-    const outboundCalls = personCalls.filter(c => c.type === 'outbound' || c.direction === 'outbound');
-    const connectedCalls = outboundCalls.filter(c => c.duration > 0);
+    const outboundCalls = personCalls.filter(c => c.isIncoming === false);
+    const connectedCalls = outboundCalls.filter(c => (c.duration || 0) > 0);
     const hasOutbound = outboundCalls.length > 0;
     const hasConnected = connectedCalls.length > 0;
 
@@ -309,27 +298,10 @@ function computeMetrics(raw, config) {
     // Responds by text / email — not available without per-person API calls
     // These counts remain at 0; can be enabled if FUB adds global endpoints
 
-    // Quality lead (has 1+ appointment)
-    const personAppts = apptsByPerson[p.id] || [];
-    if (personAppts.length > 0) {
-      agent.quality_leads++;
-    }
-
-    // Appointments count
-    agent.appointments_set += personAppts.length;
-
-    // Deals
-    const personDeals = dealsByPerson[p.id] || [];
-    for (const d of personDeals) {
-      const dStage = (d.stage || d.stageName || '').toLowerCase();
-      if (dStage.includes('closed')) {
-        agent.closed_deals++;
-        agent.closed_value += parseFloat(d.price) || 0;
-        agent.closed_commission += parseFloat(d.commission) || 0;
-      } else if (!dStage.includes('lost') && !dStage.includes('dead')) {
-        agent.pending_deals++;
-      }
-    }
+    // Quality lead — we can't join appointments to people directly
+    // (FUB appointments lack personId). We approximate: a lead with
+    // connected calls AND the agent has appointments is "quality".
+    // Actual quality_leads and appointments are counted per-agent below.
 
     // Speed to lead — find earliest outbound call
     const leadCreated = new Date(p.created || p.dateCreated);
@@ -358,92 +330,111 @@ function computeMetrics(raw, config) {
     }
     sourceMap[srcKey].lead_count++;
     if (hasConnected) sourceMap[srcKey].reached_count++;
-    sourceMap[srcKey].appointments += personAppts.length;
     if (hasLenderTag) sourceMap[srcKey].lender_sent++;
-
-    for (const d of personDeals) {
-      const dStage = (d.stage || d.stageName || '').toLowerCase();
-      if (dStage.includes('closed')) {
-        sourceMap[srcKey].closings++;
-        sourceMap[srcKey].closed_value += parseFloat(d.price) || 0;
-      }
-    }
 
     // Per-agent source tracking
     if (!agent._source_data[srcKey]) {
       agent._source_data[srcKey] = { source: srcKey, lead_count: 0, closings: 0, closed_value: 0 };
     }
     agent._source_data[srcKey].lead_count++;
-    for (const d of personDeals) {
-      const dStage = (d.stage || d.stageName || '').toLowerCase();
-      if (dStage.includes('closed')) {
-        agent._source_data[srcKey].closings++;
-        agent._source_data[srcKey].closed_value += parseFloat(d.price) || 0;
-      }
-    }
-
-    // Closed deal journey tracking (for winning path)
-    for (const d of personDeals) {
-      const dStage = (d.stage || d.stageName || '').toLowerCase();
-      if (dStage.includes('closed')) {
-        const journey = {
-          lead_created: leadCreated,
-          speed_to_contact_min: earliestOutbound && earliestOutbound > leadCreated
-            ? (earliestOutbound - leadCreated) / (1000 * 60) : null,
-          calls_to_connect: 0,
-          first_appt_date: null,
-          days_to_appointment: null,
-          lender_tag: hasLenderTag,
-          close_date: new Date(d.closedAt || d.updated || d.created),
-          days_lender_to_close: null,
-          source: srcKey
-        };
-
-        // Calls before first connection
-        const sortedOutbound = outboundCalls.sort((a, b) => new Date(a.created) - new Date(b.created));
-        let callsBeforeConnect = 0;
-        for (const c of sortedOutbound) {
-          callsBeforeConnect++;
-          if (c.duration > 0) break;
-        }
-        journey.calls_to_connect = callsBeforeConnect;
-
-        // First appointment date
-        if (personAppts.length > 0) {
-          const sortedAppts = [...personAppts].sort((a, b) =>
-            new Date(a.startDate || a.created) - new Date(b.startDate || b.created));
-          journey.first_appt_date = new Date(sortedAppts[0].startDate || sortedAppts[0].created);
-          journey.days_to_appointment = (journey.first_appt_date - leadCreated) / (1000 * 60 * 60 * 24);
-        }
-
-        // Days from lender to close (if lender tagged)
-        if (hasLenderTag && journey.close_date) {
-          // Approximate: use midpoint of period as lender referral date estimate
-          // In reality we'd need lender tag date, but FUB doesn't track tag-added dates
-          // So we estimate based on appointment date → close date
-          if (journey.first_appt_date) {
-            journey.days_lender_to_close = (journey.close_date - journey.first_appt_date) / (1000 * 60 * 60 * 24);
-          }
-        }
-
-        agent._closed_journeys.push(journey);
-      }
-    }
   }
 
   // ---- Process calls for agent-level counts ----
+  // FUB: isIncoming (boolean), duration (seconds), userId (agent ID)
   for (const c of calls) {
     const agent = agentMap[c.userId];
     if (!agent) continue;
 
-    const isOutbound = c.type === 'outbound' || c.direction === 'outbound';
-    const isInbound = c.type === 'inbound' || c.direction === 'inbound';
+    if (c.isIncoming === false) agent.calls_outbound++;
+    else if (c.isIncoming === true) agent.calls_inbound++;
 
-    if (isOutbound) agent.calls_outbound++;
-    if (isInbound) agent.calls_inbound++;
     if ((c.duration || 0) > 0) {
       agent.calls_connected++;
       agent.talk_seconds += c.duration || 0;
+    }
+  }
+
+  // ---- Process appointments per agent ----
+  // FUB: createdById = agent user ID
+  for (const [uid, agentAppts] of Object.entries(apptsByAgent)) {
+    const agent = agentMap[uid];
+    if (!agent) continue;
+    agent.appointments_set += agentAppts.length;
+  }
+
+  // ---- Process deals per agent ----
+  // FUB: users[{id, name}] array, stageName, price, commissionValue
+  const processedDealIds = new Set();
+  for (const [uid, agentDeals] of Object.entries(dealsByAgent)) {
+    const agent = agentMap[uid];
+    if (!agent) continue;
+    for (const d of agentDeals) {
+      // Avoid double-counting if deal has multiple users
+      const dealKey = `${d.id}-${uid}`;
+      if (processedDealIds.has(dealKey)) continue;
+      processedDealIds.add(dealKey);
+
+      const dStage = (d.stageName || d.stage || '').toLowerCase();
+      if (dStage.includes('closed')) {
+        agent.closed_deals++;
+        agent.closed_value += parseFloat(d.price) || 0;
+        agent.closed_commission += parseFloat(d.commissionValue) || 0;
+
+        // Journey tracking for winning path
+        agent._closed_journeys.push({
+          speed_to_contact_min: null, // will be enriched if we can match to a person
+          calls_to_connect: 0,
+          first_appt_date: null,
+          days_to_appointment: null,
+          lender_tag: false,
+          close_date: new Date(d.enteredStageAt || d.projectedCloseDate || d.createdAt),
+          days_lender_to_close: null,
+          source: 'Unknown'
+        });
+
+        // Track closed deals in source map via deal people if available
+        const dealPeople = d.people || [];
+        // We'll enrich source data separately below
+      } else if (!dStage.includes('lost') && !dStage.includes('dead')) {
+        agent.pending_deals++;
+      }
+    }
+  }
+
+  // ---- Enrich source map with deal closings ----
+  // Match deals to people by name for source attribution
+  const peopleByName = {};
+  for (const p of people) {
+    if (p.name) peopleByName[p.name.toLowerCase()] = p;
+  }
+  for (const d of deals) {
+    const dStage = (d.stageName || d.stage || '').toLowerCase();
+    if (!dStage.includes('closed')) continue;
+    // Try to match deal name to a person
+    const dealName = (d.name || '').toLowerCase();
+    const matchedPerson = peopleByName[dealName];
+    const source = matchedPerson ? (matchedPerson.source || 'Untagged') : 'Untagged';
+    const srcKey = source.trim() || 'Untagged';
+    if (!sourceMap[srcKey]) {
+      sourceMap[srcKey] = {
+        source: srcKey,
+        lead_count: 0, reached_count: 0, appointments: 0,
+        lender_sent: 0, closings: 0, closed_value: 0, revenue_per_lead: 0, close_rate_pct: 0
+      };
+    }
+    sourceMap[srcKey].closings++;
+    sourceMap[srcKey].closed_value += parseFloat(d.price) || 0;
+
+    // Also update per-agent source data
+    const dealUsers = d.users || [];
+    for (const du of dealUsers) {
+      const agent = agentMap[du.id];
+      if (!agent) continue;
+      if (!agent._source_data[srcKey]) {
+        agent._source_data[srcKey] = { source: srcKey, lead_count: 0, closings: 0, closed_value: 0 };
+      }
+      agent._source_data[srcKey].closings++;
+      agent._source_data[srcKey].closed_value += parseFloat(d.price) || 0;
     }
   }
 
@@ -555,18 +546,35 @@ function computeMetrics(raw, config) {
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
   team.calls_outbound_this_week = calls.filter(c =>
-    (c.type === 'outbound' || c.direction === 'outbound') &&
-    new Date(c.created || c.dateCreated) >= weekAgo
+    c.isIncoming === false &&
+    new Date(c.created) >= weekAgo
   ).length;
 
   // ---- Winning path from closed journeys ----
   const winningPath = computeWinningPath(allJourneys);
 
   // ---- Pipeline opportunity buckets ----
-  const pipeline = computePipelineOpportunity(people, callsByPerson, apptsByPerson, dealsByPerson, thresholds);
+  const pipeline = computePipelineOpportunity(people, callsByPerson, thresholds);
 
   // ---- Compute badges ----
   computeBadges(agentList, team);
+
+  // Diagnostic summary
+  console.log('=== METRIC SUMMARY ===');
+  console.log(`Agents: ${agentList.length}`);
+  console.log(`Team leads_assigned: ${team.leads_assigned}`);
+  console.log(`Team calls_outbound: ${team.calls_outbound}`);
+  console.log(`Team calls_connected: ${team.calls_connected}`);
+  console.log(`Team appointments_set: ${team.appointments_set}`);
+  console.log(`Team closed_deals: ${team.closed_deals}`);
+  console.log(`Team closed_value: ${team.closed_value}`);
+  console.log(`Team reach_rate: ${team.reach_rate_pct}%`);
+  console.log(`Team lender_sent: ${team.lender_sent}`);
+  for (const a of agentList) {
+    if (a.leads_assigned > 0 || a.calls_outbound > 0 || a.closed_deals > 0) {
+      console.log(`  ${a.name}: leads=${a.leads_assigned} calls_out=${a.calls_outbound} connected=${a.calls_connected} appts=${a.appointments_set} closed=${a.closed_deals} value=${a.closed_value} reach=${a.reach_rate_pct}%`);
+    }
+  }
 
   return {
     agents: agentList,
@@ -630,23 +638,10 @@ function avg(arr) {
 // ---------------------------------------------------------------------------
 // Pipeline opportunity
 // ---------------------------------------------------------------------------
-function computePipelineOpportunity(people, callsByPerson, apptsByPerson, dealsByPerson, thresholds) {
+function computePipelineOpportunity(people, callsByPerson, thresholds) {
   const staleDays = thresholds.stale_lead_days || 30;
   const now = Date.now();
-
-  // Estimate average deal value from closed deals for pipeline valuation
-  let totalClosedValue = 0;
-  let closedCount = 0;
-  for (const personDeals of Object.values(dealsByPerson)) {
-    for (const d of personDeals) {
-      const stage = (d.stage || d.stageName || '').toLowerCase();
-      if (stage.includes('closed')) {
-        totalClosedValue += parseFloat(d.price) || 0;
-        closedCount++;
-      }
-    }
-  }
-  const avgDealValue = closedCount > 0 ? totalClosedValue / closedCount : 300000;
+  const avgDealValue = 300000; // Default estimate for pipeline valuation
 
   let neverContacted = { count: 0, value: 0 };
   let reachedNoAppt = { count: 0, value: 0 };
@@ -655,20 +650,24 @@ function computePipelineOpportunity(people, callsByPerson, apptsByPerson, dealsB
   let staleCount = 0;
 
   for (const p of people) {
-    const stage = (p.stage || p.stageName || '').toLowerCase();
+    const stage = (p.stage || '').toLowerCase();
     if (stage.includes('closed') || stage.includes('archive')) continue;
 
     const personCalls = callsByPerson[p.id] || [];
-    const outboundCalls = personCalls.filter(c => c.type === 'outbound' || c.direction === 'outbound');
-    const connectedCalls = outboundCalls.filter(c => c.duration > 0);
-    const personAppts = apptsByPerson[p.id] || [];
+    const outboundCalls = personCalls.filter(c => c.isIncoming === false);
+    const connectedCalls = outboundCalls.filter(c => (c.duration || 0) > 0);
     const tags = p.tags || [];
     const hasLender = tags.some(t => (typeof t === 'string' ? t : (t.name || '')).toLowerCase().includes('lender'));
 
-    const leadValue = parseFloat(p.price) || avgDealValue * 0.02; // 2% estimated close rate
+    // Use person's deal stage from the people record for funnel position
+    const dealStage = (p.dealStage || '').toLowerCase();
+    const hasAppt = stage.includes('spoke') || stage.includes('hot') || stage.includes('warm') ||
+                    stage.includes('pending') || dealStage.includes('pending') || hasLender;
+
+    const leadValue = parseFloat(p.price) || avgDealValue * 0.02;
 
     // Stale check
-    const lastAct = p.lastActivity || p.lastUpdated || p.updated;
+    const lastAct = p.lastActivity || p.updated;
     if (lastAct) {
       const daysSince = (now - new Date(lastAct).getTime()) / (1000 * 60 * 60 * 24);
       if (daysSince > staleDays) staleCount++;
@@ -677,18 +676,16 @@ function computePipelineOpportunity(people, callsByPerson, apptsByPerson, dealsB
     if (outboundCalls.length === 0) {
       neverContacted.count++;
       neverContacted.value += leadValue;
-    } else if (connectedCalls.length === 0 && personAppts.length === 0) {
-      // Attempted but never reached, no appointment
+    } else if (connectedCalls.length === 0) {
       reachedNoAppt.count++;
       reachedNoAppt.value += leadValue;
-    } else if (connectedCalls.length > 0 && personAppts.length === 0) {
+    } else if (!hasAppt && !hasLender) {
       reachedNoAppt.count++;
       reachedNoAppt.value += leadValue;
-    } else if (personAppts.length > 0 && !hasLender) {
+    } else if (hasAppt && !hasLender) {
       apptNoLender.count++;
       apptNoLender.value += leadValue;
     } else if (hasLender) {
-      // Has lender tag but not closed (we already filtered closed above)
       lenderNotClosed.count++;
       lenderNotClosed.value += leadValue;
     }
