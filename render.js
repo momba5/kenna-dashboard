@@ -258,7 +258,7 @@ function renderWinningPath(data) {
     { label: 'Speed to Contact', value: fmtTime(wp.avg_speed_to_contact_min), icon: '⚡' },
     { label: 'Calls to Connect', value: wp.avg_calls_to_connect != null ? Math.round(wp.avg_calls_to_connect) : '—', icon: '📞' },
     { label: 'Days to Appt', value: wp.avg_days_to_appointment != null ? Math.round(wp.avg_days_to_appointment) + 'd' : '—', icon: '📅' },
-    { label: 'Appts to Lender', value: wp.avg_appts_to_lender != null ? Math.round(wp.avg_appts_to_lender) : '—', icon: '🏦' },
+    { label: 'Appts per Lender Ref', value: wp.avg_appts_to_lender != null ? wp.avg_appts_to_lender.toFixed(1) : '—', icon: '🏦' },
     { label: 'Days to Close', value: wp.avg_days_lender_to_close != null ? Math.round(wp.avg_days_lender_to_close) + 'd' : '—', icon: '🏠' },
     { label: 'Top Source', value: esc(wp.top_source_closed || '—'), icon: '🎯' },
   ];
@@ -274,9 +274,10 @@ function renderWinningPath(data) {
 
   return `<section class="section" id="winning-path">
   <h2 class="section-title">The Winning Path</h2>
-  <p class="section-subtitle">Here is what a Kenna closing looks like — based on actual closed deals this period</p>
+  <p class="section-subtitle">Here is what a Kenna closing looks like — based on ${wp.sample_size || 0} closed deals this period</p>
   <div class="card">
     <div class="timeline">${timelineHtml}</div>
+    ${wp.based_on_averages ? '<p style="text-align:center;font-size:12px;color:var(--white-40);margin-top:8px">Some metrics based on team averages where individual deal data was limited</p>' : ''}
     ${narrative ? `<div class="insight-block"><img src="${esc(FROG_CTA)}" class="insight-frog" alt="">${narrative.split('\n').map(p => `<p>${esc(p)}</p>`).join('')}</div>` : ''}
   </div>
 </section>`;

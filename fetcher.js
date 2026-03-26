@@ -407,8 +407,26 @@ function compute(users, people, calls, appointments, deals, config) {
   // ==================================================================
   // 10. Process deals — match by d.users[0].name
   // ==================================================================
+  // Build people index by ID and by name for deal→person linking
+  const peopleById = {};
   const peopleByName = {};
-  for (const p of people) { if (p.name) peopleByName[p.name.toLowerCase().trim()] = p; }
+  for (const p of people) {
+    if (p.id) peopleById[p.id] = p;
+    if (p.name) peopleByName[p.name.toLowerCase().trim()] = p;
+  }
+
+  // Build appointments index by personId (from invitees) for earliest appt date
+  const apptsByPersonId = {};
+  for (const ap of appointments) {
+    for (const inv of (ap.invitees || [])) {
+      if (inv.personId) {
+        const apptDate = new Date(ap.start || ap.created);
+        if (!apptsByPersonId[inv.personId] || apptDate < apptsByPersonId[inv.personId]) {
+          apptsByPersonId[inv.personId] = apptDate;
+        }
+      }
+    }
+  }
 
   for (const d of deals) {
     const du = (d.users || [])[0];
@@ -426,10 +444,19 @@ function compute(users, people, calls, appointments, deals, config) {
       a.closed_value += parseFloat(d.price) || 0;
       a.closed_commission += parseFloat(d.commissionValue) || 0;
 
+      // Find the associated person: try deal.people[0].id first, then name match
+      const dealPeople = d.people || [];
+      let person = null;
+      if (dealPeople.length > 0 && dealPeople[0].id) {
+        person = peopleById[dealPeople[0].id] || null;
+      }
+      if (!person) {
+        const dealName = (d.name || '').toLowerCase().trim();
+        person = peopleByName[dealName] || null;
+      }
+
       // Source attribution
-      const dealName = (d.name || '').toLowerCase().trim();
-      const matched = peopleByName[dealName];
-      const srcKey = matched ? ((matched.source || '').trim() || 'Untagged') : 'Untagged';
+      const srcKey = person ? ((person.source || '').trim() || 'Unknown') : 'Unknown';
       if (!sourceMap[srcKey]) {
         sourceMap[srcKey] = { source: srcKey, lead_count: 0, reached_count: 0, pipeline_count: 0,
           closings: 0, closed_value: 0, close_rate_pct: 0, revenue_per_lead: 0, appointments: 0, lender_sent: 0 };
@@ -441,12 +468,63 @@ function compute(users, people, calls, appointments, deals, config) {
       a._source_data[srcKey].closings++;
       a._source_data[srcKey].closed_value += parseFloat(d.price) || 0;
 
-      // Journey
-      a._closed_journeys.push({
-        speed_to_contact_min: null, calls_to_connect: 0, lender_tag: false,
-        close_date: new Date(d.enteredStageAt || d.projectedCloseDate || d.createdAt),
-        days_lender_to_close: null, source: srcKey,
-      });
+      // Build enriched journey from person data
+      const closeDate = new Date(d.enteredStageAt || d.projectedCloseDate || d.createdAt);
+      const journey = {
+        speed_to_contact_min: null,
+        calls_to_connect: null,
+        days_to_appointment: null,
+        days_to_close: null,
+        lender_tag: false,
+        close_date: closeDate,
+        source: srcKey,
+      };
+
+      if (person) {
+        const personCreated = new Date(person.created);
+        const pc = callsByPerson[person.id] || [];
+        const outbound = pc.filter(c => c.isIncoming === false);
+
+        // Speed to contact: person.created → earliest outbound call
+        if (outbound.length > 0) {
+          let earliest = Infinity;
+          for (const c of outbound) {
+            const t = new Date(c.created).getTime();
+            if (t < earliest) earliest = t;
+          }
+          const pcMs = personCreated.getTime();
+          if (earliest > pcMs) {
+            const mins = (earliest - pcMs) / 60000;
+            if (mins <= 4320) journey.speed_to_contact_min = mins; // cap 72h
+          }
+        }
+
+        // Calls to connect: outbound calls before first connected call
+        const sorted = [...outbound].sort((x, y) => new Date(x.created) - new Date(y.created));
+        let callCount = 0;
+        for (const c of sorted) {
+          callCount++;
+          if (c.duration > 0) break;
+        }
+        if (callCount > 0) journey.calls_to_connect = callCount;
+
+        // Days to appointment: earliest appointment date - person.created
+        const firstAppt = apptsByPersonId[person.id];
+        if (firstAppt) {
+          journey.days_to_appointment = (firstAppt.getTime() - personCreated.getTime()) / 86400000;
+          if (journey.days_to_appointment < 0) journey.days_to_appointment = null;
+        }
+
+        // Days to close: closeDate - person.created
+        journey.days_to_close = (closeDate.getTime() - personCreated.getTime()) / 86400000;
+        if (journey.days_to_close < 0) journey.days_to_close = null;
+
+        // Lender tag
+        const tags = (person.tags || []).map(t => typeof t === 'string' ? t.toLowerCase() : '');
+        journey.lender_tag = tags.some(t => t.includes('lender application') || t.includes('lender - green'));
+      }
+
+      a._closed_journeys.push(journey);
     } else if (isPending) {
       a.pending_deals++;
     }
@@ -558,7 +636,7 @@ function compute(users, people, calls, appointments, deals, config) {
   // ==================================================================
   // Winning path + pipeline + badges
   // ==================================================================
-  const winningPath = computeWinningPath(allJourneys);
+  const winningPath = computeWinningPath(allJourneys, team);
   const pipeline = computePipeline(people, callsByPerson, EXCLUDED_SOURCES, thresholds);
   computeBadges(agentList, team);
 
@@ -587,21 +665,51 @@ function compute(users, people, calls, appointments, deals, config) {
 // ---------------------------------------------------------------------------
 // Winning path
 // ---------------------------------------------------------------------------
-function computeWinningPath(journeys) {
-  if (!journeys.length) return { avg_speed_to_contact_min: null, avg_calls_to_connect: null,
+function computeWinningPath(journeys, team) {
+  const empty = { avg_speed_to_contact_min: null, avg_calls_to_connect: null,
     avg_days_to_appointment: null, avg_appts_to_lender: null, avg_days_lender_to_close: null,
-    top_source_closed: null, sample_size: 0 };
-  const sp = journeys.filter(j => j.speed_to_contact_min != null).map(j => j.speed_to_contact_min);
-  const ctc = journeys.map(j => j.calls_to_connect).filter(v => v > 0);
-  const dtc = journeys.filter(j => j.days_lender_to_close != null).map(j => j.days_lender_to_close);
+    top_source_closed: null, sample_size: 0, based_on_averages: false };
+  if (!journeys.length) return empty;
+
+  // Collect values from enriched journeys
+  const speeds = journeys.filter(j => j.speed_to_contact_min != null).map(j => j.speed_to_contact_min);
+  const callsToConnect = journeys.filter(j => j.calls_to_connect != null && j.calls_to_connect > 0).map(j => j.calls_to_connect);
+  const daysToAppt = journeys.filter(j => j.days_to_appointment != null && j.days_to_appointment >= 0).map(j => j.days_to_appointment);
+  const daysToClose = journeys.filter(j => j.days_to_close != null && j.days_to_close >= 0).map(j => j.days_to_close);
+
+  // Top source — exclude Unknown/Untagged, find most common real source
   const sc = {};
-  for (const j of journeys) sc[j.source] = (sc[j.source] || 0) + 1;
-  const top = Object.entries(sc).sort((a, b) => b[1] - a[1])[0];
-  const lc = journeys.filter(j => j.lender_tag).length;
+  for (const j of journeys) {
+    const s = j.source;
+    if (s && s !== 'Unknown' && s !== 'Untagged') sc[s] = (sc[s] || 0) + 1;
+  }
+  const topEntries = Object.entries(sc).sort((a, b) => b[1] - a[1]);
+  let topSource = null;
+  if (topEntries.length > 0) {
+    // If top source has > 50% of named sources, use it; otherwise 'Mixed Sources'
+    const total = topEntries.reduce((s, e) => s + e[1], 0);
+    topSource = topEntries[0][1] / total > 0.3 ? topEntries[0][0] : 'Mixed Sources';
+  }
+
+  // Appts to lender: use team ratio as fallback
+  const lenderCount = journeys.filter(j => j.lender_tag).length;
+  let apptsToLender = null;
+  if (lenderCount > 0 && team.appointments_set > 0) {
+    apptsToLender = Math.round(team.appointments_set / team.lender_sent * 10) / 10;
+  }
+
+  // Use team averages as fallback if journey data is sparse
+  const basedOnAverages = speeds.length < 3 && callsToConnect.length < 3;
+
   return {
-    avg_speed_to_contact_min: avg(sp), avg_calls_to_connect: avg(ctc), avg_days_to_appointment: null,
-    avg_appts_to_lender: lc > 0 ? Math.round(journeys.length / lc * 10) / 10 : null,
-    avg_days_lender_to_close: avg(dtc), top_source_closed: top ? top[0] : null, sample_size: journeys.length,
+    avg_speed_to_contact_min: avg(speeds),
+    avg_calls_to_connect: callsToConnect.length >= 3 ? avg(callsToConnect) : (team.calls_per_appointment || null),
+    avg_days_to_appointment: avg(daysToAppt),
+    avg_appts_to_lender: apptsToLender,
+    avg_days_lender_to_close: avg(daysToClose), // days to close from lead creation
+    top_source_closed: topSource,
+    sample_size: journeys.length,
+    based_on_averages: basedOnAverages,
   };
 }
 function avg(a) { return a.length ? Math.round(a.reduce((s, v) => s + v, 0) / a.length * 10) / 10 : null; }
