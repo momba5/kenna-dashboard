@@ -109,6 +109,7 @@ function renderDashboard(data, config, reminders, refreshState) {
 
   const sections = [
     renderHealthSnapshot(data, config),
+    renderTeamTrends(data),
     renderWinningPath(data),
     renderFunnelSection(data, config),
     renderSourceMatrix(data),
@@ -157,6 +158,7 @@ function renderShell(body, config, refreshState) {
   ${staleBanner}
   <nav class="nav">
     <a href="#health">Health</a>
+    <a href="#trends">Trends</a>
     <a href="#winning-path">Winning Path</a>
     <a href="#funnel">Funnel</a>
     <a href="#sources">Sources</a>
@@ -242,6 +244,71 @@ function renderHealthSnapshot(data, config) {
     <div class="progress-label"><span>Team Calls This Week</span><span>${callsPct}% of target</span></div>
     <div class="progress-wrap">
       <div class="progress-bar ${callsPct >= 100 ? 'over' : 'under'}" style="width:${Math.min(callsPct, 100)}%"></div>
+    </div>
+  </div>
+</section>`;
+}
+
+// ---------------------------------------------------------------------------
+// Team Trends (shows only with 2+ weeks of data)
+// ---------------------------------------------------------------------------
+function renderTeamTrends(data) {
+  const trend = data.teamTrend;
+  if (!trend || trend.length < 2) {
+    return `<section class="section" id="trends">
+    <h2 class="section-title">Weekly Trends</h2>
+    <p class="section-subtitle" style="color:var(--white-20)">Trend data builds over time — check back after next Monday refresh</p>
+  </section>`;
+  }
+
+  // SVG sparkline helper
+  function sparkline(values, color, width = 200, height = 50) {
+    if (!values.length) return '';
+    const max = Math.max(...values, 1);
+    const min = Math.min(...values, 0);
+    const range = max - min || 1;
+    const step = width / Math.max(values.length - 1, 1);
+    const points = values.map((v, i) => `${i * step},${height - 4 - ((v - min) / range) * (height - 8)}`).join(' ');
+    const labels = values.map((v, i) => {
+      const x = i * step;
+      const y = height - 4 - ((v - min) / range) * (height - 8);
+      return `<circle cx="${x}" cy="${y}" r="3" fill="${color}"/>`;
+    }).join('');
+    return `<svg width="${width}" height="${height}" style="display:block">
+      <polyline points="${points}" fill="none" stroke="${color}" stroke-width="2"/>
+      ${labels}
+    </svg>`;
+  }
+
+  const weeks = trend.map(t => t.week.slice(5)); // MM-DD
+  const reachVals = trend.map(t => t.reachRate || 0);
+  const cpaVals = trend.map(t => t.callsPerAppt || 0);
+  const closedVals = trend.map(t => t.closedDeals || 0);
+
+  // Week labels
+  const weekLabels = `<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--white-20);margin-top:4px">${weeks.map(w => `<span>${w}</span>`).join('')}</div>`;
+
+  return `<section class="section" id="trends">
+  <h2 class="section-title">Weekly Trends</h2>
+  <p class="section-subtitle">How key metrics are moving week over week</p>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+    <div class="card" style="text-align:center">
+      <div style="font-size:12px;font-weight:700;color:var(--white-60);margin-bottom:8px">Reach Rate %</div>
+      ${sparkline(reachVals, '#039ba9')}
+      ${weekLabels}
+      <div style="font-size:18px;font-weight:900;color:var(--teal);margin-top:8px">${reachVals[reachVals.length - 1].toFixed(1)}%</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:12px;font-weight:700;color:var(--white-60);margin-bottom:8px">Calls per Appointment</div>
+      ${sparkline(cpaVals, '#ef9f27')}
+      ${weekLabels}
+      <div style="font-size:18px;font-weight:900;color:var(--amber);margin-top:8px">${Math.round(cpaVals[cpaVals.length - 1])}</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:12px;font-weight:700;color:var(--white-60);margin-bottom:8px">Closed Deals</div>
+      ${sparkline(closedVals, '#2ecc71')}
+      ${weekLabels}
+      <div style="font-size:18px;font-weight:900;color:var(--green);margin-top:8px">${closedVals[closedVals.length - 1]}</div>
     </div>
   </div>
 </section>`;
@@ -613,10 +680,35 @@ function renderAgentCard(agent, data, targets) {
     return `<span class="badge ${tierClass}"><img src="${esc(BADGE_ICON)}" alt="">${esc(b.name)}</span>`;
   }).join('');
 
+  // Trend badge
+  const trendDir = agent.trendDirection || 'Building';
+  const trendBadge = trendDir === 'Improving' ? '<span style="color:var(--teal);font-weight:700;font-size:12px">↑ Improving</span>'
+    : trendDir === 'Declining' ? '<span style="color:var(--amber);font-weight:700;font-size:12px">↓ Declining</span>'
+    : trendDir === 'Steady' ? '<span style="color:var(--white-40);font-weight:700;font-size:12px">— Steady</span>'
+    : '<span style="color:var(--white-20);font-size:11px">Building</span>';
+
+  // Reach rate delta
+  const deltaHtml = agent.reachRateDelta != null
+    ? `<span style="font-size:11px;color:${agent.reachRateDelta >= 0 ? 'var(--teal)' : 'var(--amber)'};margin-left:8px">${agent.reachRateDelta >= 0 ? '+' : ''}${agent.reachRateDelta}% vs last week</span>`
+    : '';
+
+  // Mini sparkline (SVG) for reach rate trend
+  let sparkHtml = '';
+  if (agent.weeklyTrend && agent.weeklyTrend.length >= 2) {
+    const vals = agent.weeklyTrend.slice(-4).map(w => w.reachRate || 0);
+    const max = Math.max(...vals, 1);
+    const min = Math.min(...vals, 0);
+    const range = max - min || 1;
+    const points = vals.map((v, i) => `${i * 20},${30 - ((v - min) / range) * 28}`).join(' ');
+    sparkHtml = `<svg width="60" height="30" style="margin-left:auto;flex-shrink:0"><polyline points="${points}" fill="none" stroke="var(--teal)" stroke-width="2"/></svg>`;
+  }
+
   return `<div class="agent-card">
   <div class="agent-header">
     <span class="agent-name">${esc(agent.name)}</span>
     <span class="role-badge ${roleClass}">${roleLabel}</span>
+    ${trendBadge}${deltaHtml}
+    ${sparkHtml}
   </div>
   <div class="agent-summary">${fmt(agent.calls_outbound)} calls · ${fmt(agent.appointments_set)} appts · ${fmt(agent.closed_deals)} closed · ${fmtDollar(agent.closed_value)} volume</div>
 

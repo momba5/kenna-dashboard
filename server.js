@@ -9,6 +9,7 @@ const fs = require('fs');
 const { fetchAllData } = require('./fetcher');
 const { generateInsights } = require('./insights');
 const { renderDashboard, renderLogin } = require('./render');
+const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -140,6 +141,9 @@ async function runRefresh() {
       JSON.stringify(output, null, 2)
     );
 
+    // Step 4: Save snapshot to Postgres for historical trends
+    await db.saveSnapshot(output);
+
     refreshState.lastRefresh = output.refreshedAt;
     refreshState.status = 'idle';
     console.log(`[${output.refreshedAt}] Refresh complete`);
@@ -212,7 +216,7 @@ app.get(`${BASE}/api/status`, (req, res) => {
 // ---------------------------------------------------------------------------
 // Dashboard route (auth required)
 // ---------------------------------------------------------------------------
-app.get(BASE, requireAuth, (req, res) => {
+app.get(BASE, requireAuth, async (req, res) => {
   const dataPath = path.join(__dirname, 'data.json');
   let data = null;
 
@@ -221,6 +225,16 @@ app.get(BASE, requireAuth, (req, res) => {
       data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
     } catch (e) {
       console.error('Error reading data.json:', e);
+    }
+  }
+
+  // Attach historical trends from Postgres
+  if (data) {
+    try {
+      const trends = await db.getTrends();
+      db.attachTrends(data, trends);
+    } catch (e) {
+      console.error('Trend loading failed (non-fatal):', e.message);
     }
   }
 
@@ -258,6 +272,7 @@ function scheduleCron() {
 // ---------------------------------------------------------------------------
 async function start() {
   await initPasswordHash();
+  await db.initSchema();
   scheduleCron();
 
   app.listen(PORT, () => {
