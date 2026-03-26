@@ -586,9 +586,8 @@ function computeMetrics(raw, config) {
   team.speed_to_lead_avg = allSpeeds.length > 0
     ? Math.round(allSpeeds.reduce((a, b) => a + b, 0) / allSpeeds.length * 10) / 10 : null;
 
-  const weekAgo = new Date();
-  weekAgo.setDate(weekAgo.getDate() - 7);
-  team.calls_outbound_this_week = calls.filter(c => c.isIncoming === false && new Date(c.created) >= weekAgo).length;
+  // weekAgo already declared in Step 7 above
+  team.calls_outbound_this_week = calls.filter(c => c.isIncoming === false && new Date(c.created).getTime() >= weekAgoMs).length;
 
   // ==================================================================
   // Winning path
