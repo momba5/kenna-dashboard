@@ -637,6 +637,7 @@ function compute(users, people, calls, appointments, deals, config) {
   // Winning path + pipeline + badges
   // ==================================================================
   const winningPath = computeWinningPath(allJourneys, team);
+  console.log(`Winning path: speed=${winningPath.avg_speed_to_contact_min} calls=${winningPath.avg_calls_to_connect} daysAppt=${winningPath.avg_days_to_appointment} apptsLender=${winningPath.avg_appts_to_lender} daysClose=${winningPath.avg_days_lender_to_close} topSrc=${winningPath.top_source_closed} n=${winningPath.sample_size}`);
   const pipeline = computePipeline(people, callsByPerson, EXCLUDED_SOURCES, thresholds);
   computeBadges(agentList, team);
 
