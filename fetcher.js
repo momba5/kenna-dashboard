@@ -1,5 +1,6 @@
 const https = require('https');
-const url = require('url');
+const fs = require('fs');
+const path = require('path');
 
 const FUB_BASE = 'https://api.followupboss.com/v1';
 const PAGE_LIMIT = 100;
@@ -50,10 +51,10 @@ function fubRequest(endpoint, apiKey) {
 }
 
 /**
- * Paginate through a FUB endpoint using cursor-based pagination.
- * Returns all records concatenated.
+ * Paginate via _metadata.nextLink (cursor-based).
+ * Used for /calls, /appointments — these do NOT support offset pagination reliably.
  */
-async function fetchAllPages(endpoint, apiKey, params = {}) {
+async function fetchAllPagesCursor(endpoint, apiKey, params = {}) {
   const records = [];
   const qp = new URLSearchParams({ limit: PAGE_LIMIT, ...params });
   let nextUrl = `${endpoint}?${qp.toString()}`;
@@ -61,8 +62,7 @@ async function fetchAllPages(endpoint, apiKey, params = {}) {
   while (nextUrl) {
     const resp = await fubRequest(nextUrl, apiKey);
     const items = resp.people || resp.calls || resp.appointments || resp.deals ||
-                  resp.users ||
-                  resp.events || resp.tasks || [];
+                  resp.users || resp.events || [];
     records.push(...items);
 
     nextUrl = (resp._metadata && resp._metadata.nextLink) ? resp._metadata.nextLink : null;
@@ -71,7 +71,6 @@ async function fetchAllPages(endpoint, apiKey, params = {}) {
       await sleep(RATE_DELAY_MS);
     }
 
-    // Log progress for long pulls
     if (records.length % 1000 === 0 && records.length > 0) {
       console.log(`  ... pulled ${records.length} records from ${endpoint}`);
     }
@@ -82,19 +81,35 @@ async function fetchAllPages(endpoint, apiKey, params = {}) {
 }
 
 /**
- * Try fetching an endpoint; return empty array if 404 or error.
+ * Paginate via offset (for /people, /deals which support it).
  */
-async function tryFetchAllPages(endpoint, apiKey, params = {}) {
-  try {
-    return await fetchAllPages(endpoint, apiKey, params);
-  } catch (err) {
-    console.warn(`  Endpoint ${endpoint} unavailable: ${err.message}`);
-    return [];
+async function fetchAllPagesOffset(endpoint, apiKey, params = {}) {
+  const records = [];
+  let offset = 0;
+
+  while (true) {
+    const qp = new URLSearchParams({ limit: PAGE_LIMIT, offset, ...params });
+    const resp = await fubRequest(`${endpoint}?${qp.toString()}`, apiKey);
+    const items = resp.people || resp.calls || resp.appointments || resp.deals ||
+                  resp.users || resp.events || [];
+    records.push(...items);
+
+    if (items.length < PAGE_LIMIT) break; // Last page
+    offset += PAGE_LIMIT;
+
+    await sleep(RATE_DELAY_MS);
+
+    if (records.length % 1000 === 0 && records.length > 0) {
+      console.log(`  ... pulled ${records.length} records from ${endpoint}`);
+    }
   }
+
+  console.log(`  Fetched ${records.length} records from ${endpoint}`);
+  return records;
 }
 
 // ---------------------------------------------------------------------------
-// Main data fetch + metric computation
+// Main data fetch
 // ---------------------------------------------------------------------------
 async function fetchAllData(config) {
   const apiKey = process.env.FUB_API_KEY;
@@ -107,33 +122,34 @@ async function fetchAllData(config) {
 
   console.log(`Fetching FUB data for last ${periodDays} days (since ${sinceStr})...`);
 
-  // Step 1: Fetch all users
+  // Step 1: Users (single page)
   console.log('Pulling /users...');
-  const users = await fetchAllPages('/users', apiKey);
+  const resp = await fubRequest(`/users?limit=200`, apiKey);
+  const users = resp.users || [];
+  console.log(`  Fetched ${users.length} users`);
 
-  // Step 2: Fetch all people (leads) created in period
+  // Step 2: People — offset pagination, createdAfter filter
   console.log('Pulling /people...');
-  const people = await fetchAllPages('/people', apiKey, { sort: 'created', 'created[gte]': sinceStr });
+  const people = await fetchAllPagesOffset('/people', apiKey, { sort: 'created', createdAfter: sinceStr });
 
-  // Step 3: Fetch all calls in period
-  console.log('Pulling /calls (this may take several minutes)...');
-  const calls = await fetchAllPages('/calls', apiKey, { sort: 'created', 'created[gte]': sinceStr });
+  // Step 3: Calls — cursor pagination ONLY, NO date filter via API (filter locally)
+  console.log('Pulling /calls (cursor pagination, this may take several minutes)...');
+  const allCalls = await fetchAllPagesCursor('/calls', apiKey);
 
-  // Step 4: Fetch all appointments in period
+  // Step 4: Appointments — cursor pagination
   console.log('Pulling /appointments...');
-  const appointments = await fetchAllPages('/appointments', apiKey, { sort: 'created', 'created[gte]': sinceStr });
+  const appointments = await fetchAllPagesCursor('/appointments', apiKey);
 
-  // Step 5: Fetch all deals
+  // Step 5: Deals — offset pagination (small set)
   console.log('Pulling /deals...');
-  const deals = await fetchAllPages('/deals', apiKey);
+  const deals = await fetchAllPagesOffset('/deals', apiKey);
 
-  // Speed to lead uses outbound calls only — /textMessages and /emails
-  // require per-person queries and /notes returns 168K+ records.
-  // All three are skipped; earliest outbound call is used instead.
+  // Filter calls locally to period
+  const cutoffDate = since.getTime();
+  const calls = allCalls.filter(c => new Date(c.created).getTime() >= cutoffDate);
+  console.log(`  Calls in period: ${calls.length} (filtered from ${allCalls.length} total)`);
 
   // Save raw data for debug endpoint
-  const fs = require('fs');
-  const path = require('path');
   const rawDebug = {
     people_count: people.length,
     calls_count: calls.length,
@@ -144,19 +160,18 @@ async function fetchAllData(config) {
     calls_sample: calls.slice(0, 5),
     appointments_sample: appointments.slice(0, 5),
     deals_sample: deals.slice(0, 5),
-    deal_stages: [...new Set(deals.map(d => d.stageName || d.stage || d.status || 'NONE'))],
+    deal_stages: [...new Set(deals.map(d => d.stageName || 'NONE'))],
     people_stages: [...new Set(people.map(p => p.stage || 'NONE'))],
   };
   fs.writeFileSync(path.join(__dirname, 'debug-raw.json'), JSON.stringify(rawDebug, null, 2));
-  console.log('Saved debug-raw.json');
 
-  // Build computed metrics
+  // Compute metrics
   console.log('Computing metrics...');
   return computeMetrics({ users, people, calls, appointments, deals }, config);
 }
 
 // ---------------------------------------------------------------------------
-// Metric computation
+// Metric computation — uses exact FUB field names
 // ---------------------------------------------------------------------------
 function computeMetrics(raw, config) {
   const { users, people, calls, appointments, deals } = raw;
@@ -166,303 +181,355 @@ function computeMetrics(raw, config) {
   const isaRoleNames = (config.isa_role_names || []).map(r => r.toLowerCase());
   const staleDays = thresholds.stale_lead_days || 30;
   const weeks = periodDays / 7;
-  const months = periodDays / 30;
   const now = Date.now();
 
-  // ---- Build agent map from users ----
-  const agentMap = {};
+  // Sources to exclude
+  const excludedSources = ['my +plus leads', 'imported'];
+
+  // ---- Step 1: Build userId → agent map from /users ----
+  const agentMap = {};    // keyed by user ID (number)
+  const nameToId = {};    // keyed by lowercase name → user ID
+
   for (const u of users) {
-    if (u.isActive === false) continue;
     const role = (u.role || '').toLowerCase();
     const title = (u.title || '').toLowerCase();
     const isIsa = isaRoleNames.some(r => role.includes(r) || title.includes(r));
     const isLeader = role.includes('admin') || role.includes('owner');
+    const name = u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || `User ${u.id}`;
 
     agentMap[u.id] = {
       id: u.id,
-      name: u.name || u.email || `User ${u.id}`,
+      name,
       email: u.email,
       role: u.role,
       is_isa: isIsa,
       is_leader: isLeader,
-      // Activity
       calls_outbound: 0, calls_inbound: 0, calls_connected: 0, talk_seconds: 0,
-      // Leads
       leads_assigned: 0, leads_reached: 0,
       never_called_count: 0, never_responded_count: 0,
       responds_text_count: 0, responds_email_count: 0,
-      // Conversion
       appointments_set: 0, quality_leads: 0, lender_sent: 0,
       closed_deals: 0, closed_value: 0, closed_commission: 0, pending_deals: 0,
-      // Pipeline
       stage_distribution: {},
-      pipeline_active_count: 0,
-      stale_leads_count: 0,
-      // Speed to lead tracking
+      pipeline_active_count: 0, stale_leads_count: 0,
       _lead_speeds: [],
-      // Source tracking
       _source_data: {},
-      // Closed deal journey tracking
       _closed_journeys: [],
+      _assigned_person_ids: new Set(),
     };
+
+    nameToId[name.toLowerCase()] = u.id;
   }
 
-  // ---- Index calls by personId for quick lookup ----
-  // FUB calls use: personId (number), userId (number), isIncoming (boolean), duration (seconds)
+  // Helper: resolve assignedTo to a user ID
+  function resolveAgentId(person) {
+    // Prefer numeric assignedUserId
+    if (person.assignedUserId && agentMap[person.assignedUserId]) {
+      return person.assignedUserId;
+    }
+    // Fallback: parse assignedTo (can be string or object)
+    const at = person.assignedTo;
+    if (!at) return null;
+    let assignedName;
+    if (typeof at === 'string') {
+      assignedName = at;
+    } else if (typeof at === 'object') {
+      assignedName = `${at.firstName || ''} ${at.lastName || ''}`.trim();
+    }
+    if (assignedName) {
+      const uid = nameToId[assignedName.toLowerCase()];
+      if (uid) return uid;
+    }
+    return null;
+  }
+
+  // ---- Step 2: Index calls by personId ----
+  // FUB calls: personId, userId, isIncoming (bool), duration (sec), created
   const callsByPerson = {};
   for (const c of calls) {
-    const pid = c.personId;
-    if (pid) {
-      if (!callsByPerson[pid]) callsByPerson[pid] = [];
-      callsByPerson[pid].push(c);
+    if (c.personId) {
+      if (!callsByPerson[c.personId]) callsByPerson[c.personId] = [];
+      callsByPerson[c.personId].push(c);
     }
   }
 
-  // ---- Index appointments by createdById (agent who created) ----
-  // FUB appointments have: createdById (user ID), invitees (array), no personId
-  // We index by createdById for agent-level counting
-  const apptsByAgent = {};
-  let totalAppointments = 0;
+  // ---- Step 3: Build quality leads set from appointment invitees ----
+  // FUB appointments: createdById (agent), invitees[{userId, personId}]
+  const qualityPersonIds = new Set();
+  const apptCountByAgent = {};
+
   for (const a of appointments) {
-    const uid = a.createdById;
-    if (uid) {
-      if (!apptsByAgent[uid]) apptsByAgent[uid] = [];
-      apptsByAgent[uid].push(a);
-      totalAppointments++;
+    const agentId = a.createdById;
+    if (agentId) {
+      apptCountByAgent[agentId] = (apptCountByAgent[agentId] || 0) + 1;
     }
-  }
-
-  // ---- Index deals by user ID from users array ----
-  // FUB deals have: users[{id, name}], people[], stageName, price, commissionValue
-  const dealsByAgent = {};
-  for (const d of deals) {
-    const dealUsers = d.users || [];
-    for (const du of dealUsers) {
-      if (du.id) {
-        if (!dealsByAgent[du.id]) dealsByAgent[du.id] = [];
-        dealsByAgent[du.id].push(d);
+    // Collect lead personIds from invitees
+    const invitees = a.invitees || [];
+    for (const inv of invitees) {
+      if (inv.personId) {
+        qualityPersonIds.add(inv.personId);
       }
     }
   }
 
-  // ---- Index inbound calls by personId (for never_responded detection) ----
-  // FUB: isIncoming === true means inbound
-  const inboundByPerson = {};
-  for (const c of calls) {
-    if (c.personId && c.isIncoming === true) {
-      inboundByPerson[c.personId] = true;
+  // ---- Step 4: Index deals by agent userId ----
+  // FUB deals: users[{id, name}], stageName, price, commissionValue
+  const dealsByAgent = {};
+  for (const d of deals) {
+    const dUsers = d.users || [];
+    if (dUsers.length > 0 && dUsers[0].id) {
+      const uid = dUsers[0].id;
+      if (!dealsByAgent[uid]) dealsByAgent[uid] = [];
+      dealsByAgent[uid].push(d);
     }
   }
 
-  // ---- Source quality tracking (global) ----
+  // ---- Step 5: Source quality tracking (global) ----
   const sourceMap = {};
 
-  // ---- Process people (leads) ----
+  // ---- Step 6: Process people (leads) ----
+  let excludedCount = 0;
+
   for (const p of people) {
-    // FUB: assignedUserId is the numeric ID, assignedTo is the name string
-    const agentId = p.assignedUserId;
+    // Exclude certain sources
+    const src = (p.source || '').toLowerCase().trim();
+    if (excludedSources.some(ex => src === ex.toLowerCase())) {
+      excludedCount++;
+      continue;
+    }
+
+    const agentId = resolveAgentId(p);
     const agent = agentMap[agentId];
     if (!agent) continue;
 
     agent.leads_assigned++;
+    agent._assigned_person_ids.add(p.id);
 
     // Stage distribution
-    const stage = p.stage || p.stageName || 'Unknown';
+    const stage = p.stage || 'Unknown';
     agent.stage_distribution[stage] = (agent.stage_distribution[stage] || 0) + 1;
 
-    // Pipeline active (not archived, not closed)
+    // Pipeline active: not closed and not archived
     const stageLower = stage.toLowerCase();
-    if (!stageLower.includes('archive') && !stageLower.includes('closed')) {
+    if (!stageLower.includes('closed') && !stageLower.includes('close') && !stageLower.includes('archive')) {
       agent.pipeline_active_count++;
     }
 
     // Stale lead detection
-    const lastAct = p.lastActivity || p.lastUpdated || p.updated;
+    const lastAct = p.lastActivity || p.updated;
     if (lastAct) {
       const daysSince = (now - new Date(lastAct).getTime()) / (1000 * 60 * 60 * 24);
-      if (daysSince > staleDays && !stageLower.includes('closed') && !stageLower.includes('archive')) {
+      if (daysSince > staleDays && !stageLower.includes('closed') && !stageLower.includes('close') && !stageLower.includes('archive')) {
         agent.stale_leads_count++;
       }
     }
 
-    // Lender tag detection
+    // Reached: use FUB's contacted boolean
+    if (p.contacted === true) {
+      agent.leads_reached++;
+    }
+
+    // Lender sent: check tags for 'lender application' or 'lender - green'
     const tags = p.tags || [];
-    const hasLenderTag = tags.some(t => (typeof t === 'string' ? t : (t.name || '')).toLowerCase().includes('lender'));
+    const hasLenderTag = tags.some(t =>
+      typeof t === 'string' &&
+      (t.toLowerCase().includes('lender application') || t.toLowerCase().includes('lender - green'))
+    );
     if (hasLenderTag) {
       agent.lender_sent++;
     }
 
-    // Check if lead was reached (has any connected outbound call)
-    // FUB: isIncoming=false means outbound, duration>0 means connected
-    const personCalls = callsByPerson[p.id] || [];
-    const outboundCalls = personCalls.filter(c => c.isIncoming === false);
-    const connectedCalls = outboundCalls.filter(c => (c.duration || 0) > 0);
-    const hasOutbound = outboundCalls.length > 0;
-    const hasConnected = connectedCalls.length > 0;
-
-    if (hasConnected) {
-      agent.leads_reached++;
+    // Quality lead: is this person in the appointment invitees set?
+    if (qualityPersonIds.has(p.id)) {
+      agent.quality_leads++;
     }
 
-    // Never called
-    if (!hasOutbound) {
+    // Never called: no outbound calls to this person
+    const personCalls = callsByPerson[p.id] || [];
+    const outboundCalls = personCalls.filter(c => c.isIncoming === false);
+    if (outboundCalls.length === 0) {
       agent.never_called_count++;
     }
 
-    // Never responded (no inbound activity)
-    if (!inboundByPerson[p.id]) {
+    // Never responded: no inbound calls from this person
+    const inboundCalls = personCalls.filter(c => c.isIncoming === true);
+    if (inboundCalls.length === 0) {
       agent.never_responded_count++;
     }
 
-    // Responds by text / email — not available without per-person API calls
-    // These counts remain at 0; can be enabled if FUB adds global endpoints
-
-    // Quality lead — we can't join appointments to people directly
-    // (FUB appointments lack personId). We approximate: a lead with
-    // connected calls AND the agent has appointments is "quality".
-    // Actual quality_leads and appointments are counted per-agent below.
-
-    // Speed to lead — find earliest outbound call
-    const leadCreated = new Date(p.created || p.dateCreated);
-    let earliestOutbound = null;
-
-    for (const c of outboundCalls) {
-      const cDate = new Date(c.created || c.dateCreated);
-      if (!earliestOutbound || cDate < earliestOutbound) earliestOutbound = cDate;
-    }
-
-    if (earliestOutbound && earliestOutbound > leadCreated) {
-      const speedMin = (earliestOutbound - leadCreated) / (1000 * 60);
-      agent._lead_speeds.push(speedMin);
+    // Speed to lead: earliest outbound call after lead creation
+    const leadCreated = new Date(p.created);
+    if (outboundCalls.length > 0) {
+      let earliest = null;
+      for (const c of outboundCalls) {
+        const cDate = new Date(c.created);
+        if (!earliest || cDate < earliest) earliest = cDate;
+      }
+      if (earliest && earliest > leadCreated) {
+        const speedMin = (earliest - leadCreated) / (1000 * 60);
+        agent._lead_speeds.push(speedMin);
+      }
     }
 
     // Source quality tracking
-    const source = p.source || p.sourceType || 'Untagged';
-    const srcKey = source.trim() || 'Untagged';
-
-    if (!sourceMap[srcKey]) {
-      sourceMap[srcKey] = {
-        source: srcKey,
+    const sourceKey = (p.source || '').trim() || 'Untagged';
+    if (!sourceMap[sourceKey]) {
+      sourceMap[sourceKey] = {
+        source: sourceKey,
         lead_count: 0, reached_count: 0, appointments: 0,
         lender_sent: 0, closings: 0, closed_value: 0, revenue_per_lead: 0, close_rate_pct: 0
       };
     }
-    sourceMap[srcKey].lead_count++;
-    if (hasConnected) sourceMap[srcKey].reached_count++;
-    if (hasLenderTag) sourceMap[srcKey].lender_sent++;
+    sourceMap[sourceKey].lead_count++;
+    if (p.contacted === true) sourceMap[sourceKey].reached_count++;
+    if (qualityPersonIds.has(p.id)) sourceMap[sourceKey].appointments++;
+    if (hasLenderTag) sourceMap[sourceKey].lender_sent++;
 
     // Per-agent source tracking
-    if (!agent._source_data[srcKey]) {
-      agent._source_data[srcKey] = { source: srcKey, lead_count: 0, closings: 0, closed_value: 0 };
+    if (!agent._source_data[sourceKey]) {
+      agent._source_data[sourceKey] = { source: sourceKey, lead_count: 0, closings: 0, closed_value: 0 };
     }
-    agent._source_data[srcKey].lead_count++;
+    agent._source_data[sourceKey].lead_count++;
   }
 
-  // ---- Process calls for agent-level counts ----
-  // FUB: isIncoming (boolean), duration (seconds), userId (agent ID)
+  console.log(`  People processed: ${people.length - excludedCount} clean (${excludedCount} excluded)`);
+
+  // ---- Step 7: Process calls for per-agent counts ----
+  // FUB: isIncoming (bool), duration (sec), userId (agent)
   for (const c of calls) {
     const agent = agentMap[c.userId];
     if (!agent) continue;
 
-    if (c.isIncoming === false) agent.calls_outbound++;
-    else if (c.isIncoming === true) agent.calls_inbound++;
+    if (c.isIncoming === false) {
+      agent.calls_outbound++;
+    } else if (c.isIncoming === true) {
+      agent.calls_inbound++;
+    }
 
     if ((c.duration || 0) > 0) {
       agent.calls_connected++;
-      agent.talk_seconds += c.duration || 0;
+      agent.talk_seconds += c.duration;
     }
   }
 
-  // ---- Process appointments per agent ----
-  // FUB: createdById = agent user ID
-  for (const [uid, agentAppts] of Object.entries(apptsByAgent)) {
+  // ---- Step 8: Appointments per agent (via createdById) ----
+  for (const [uid, count] of Object.entries(apptCountByAgent)) {
     const agent = agentMap[uid];
-    if (!agent) continue;
-    agent.appointments_set += agentAppts.length;
+    if (agent) {
+      agent.appointments_set = count;
+    }
   }
 
-  // ---- Process deals per agent ----
-  // FUB: users[{id, name}] array, stageName, price, commissionValue
-  const processedDealIds = new Set();
+  // ---- Step 9: Deals per agent ----
+  // Match deal name to people for source attribution
+  const peopleByName = {};
+  for (const p of people) {
+    if (p.name) peopleByName[p.name.toLowerCase()] = p;
+  }
+
   for (const [uid, agentDeals] of Object.entries(dealsByAgent)) {
     const agent = agentMap[uid];
     if (!agent) continue;
-    for (const d of agentDeals) {
-      // Avoid double-counting if deal has multiple users
-      const dealKey = `${d.id}-${uid}`;
-      if (processedDealIds.has(dealKey)) continue;
-      processedDealIds.add(dealKey);
 
-      const dStage = (d.stageName || d.stage || '').toLowerCase();
-      if (dStage.includes('closed')) {
+    for (const d of agentDeals) {
+      const stageName = (d.stageName || '').toLowerCase();
+      const isClosed = stageName.includes('closed') || stageName.includes('close');
+
+      if (isClosed) {
         agent.closed_deals++;
         agent.closed_value += parseFloat(d.price) || 0;
         agent.closed_commission += parseFloat(d.commissionValue) || 0;
 
+        // Source attribution: try to match deal name to a person
+        const dealName = (d.name || '').toLowerCase();
+        const matchedPerson = peopleByName[dealName];
+        const sourceKey = matchedPerson ? ((matchedPerson.source || '').trim() || 'Untagged') : 'Untagged';
+
+        if (!sourceMap[sourceKey]) {
+          sourceMap[sourceKey] = {
+            source: sourceKey,
+            lead_count: 0, reached_count: 0, appointments: 0,
+            lender_sent: 0, closings: 0, closed_value: 0, revenue_per_lead: 0, close_rate_pct: 0
+          };
+        }
+        sourceMap[sourceKey].closings++;
+        sourceMap[sourceKey].closed_value += parseFloat(d.price) || 0;
+
+        // Per-agent source data
+        if (!agent._source_data[sourceKey]) {
+          agent._source_data[sourceKey] = { source: sourceKey, lead_count: 0, closings: 0, closed_value: 0 };
+        }
+        agent._source_data[sourceKey].closings++;
+        agent._source_data[sourceKey].closed_value += parseFloat(d.price) || 0;
+
         // Journey tracking for winning path
-        agent._closed_journeys.push({
-          speed_to_contact_min: null, // will be enriched if we can match to a person
+        const journey = {
+          speed_to_contact_min: null,
           calls_to_connect: 0,
           first_appt_date: null,
           days_to_appointment: null,
           lender_tag: false,
           close_date: new Date(d.enteredStageAt || d.projectedCloseDate || d.createdAt),
           days_lender_to_close: null,
-          source: 'Unknown'
-        });
+          source: sourceKey,
+          lead_created: null,
+        };
 
-        // Track closed deals in source map via deal people if available
-        const dealPeople = d.people || [];
-        // We'll enrich source data separately below
-      } else if (!dStage.includes('lost') && !dStage.includes('dead')) {
-        agent.pending_deals++;
+        // Try to enrich journey from matched person
+        if (matchedPerson) {
+          journey.lead_created = new Date(matchedPerson.created);
+          const personCalls = callsByPerson[matchedPerson.id] || [];
+          const outbound = personCalls.filter(c => c.isIncoming === false);
+
+          // Speed to contact
+          if (outbound.length > 0) {
+            let earliest = null;
+            for (const c of outbound) {
+              const cd = new Date(c.created);
+              if (!earliest || cd < earliest) earliest = cd;
+            }
+            if (earliest && earliest > journey.lead_created) {
+              journey.speed_to_contact_min = (earliest - journey.lead_created) / (1000 * 60);
+            }
+          }
+
+          // Calls before first connection
+          const sorted = [...outbound].sort((a, b) => new Date(a.created) - new Date(b.created));
+          let count = 0;
+          for (const c of sorted) {
+            count++;
+            if ((c.duration || 0) > 0) break;
+          }
+          journey.calls_to_connect = count;
+
+          // Lender tag
+          const tags = matchedPerson.tags || [];
+          journey.lender_tag = tags.some(t =>
+            typeof t === 'string' &&
+            (t.toLowerCase().includes('lender application') || t.toLowerCase().includes('lender - green'))
+          );
+
+          // Days lender to close
+          if (journey.lender_tag && journey.close_date && journey.lead_created) {
+            journey.days_lender_to_close = (journey.close_date - journey.lead_created) / (1000 * 60 * 60 * 24);
+          }
+        }
+
+        agent._closed_journeys.push(journey);
+      } else {
+        const isLost = stageName.includes('lost') || stageName.includes('dead') || stageName.includes('withdrawn');
+        if (!isLost) {
+          agent.pending_deals++;
+        }
       }
     }
   }
 
-  // ---- Enrich source map with deal closings ----
-  // Match deals to people by name for source attribution
-  const peopleByName = {};
-  for (const p of people) {
-    if (p.name) peopleByName[p.name.toLowerCase()] = p;
-  }
-  for (const d of deals) {
-    const dStage = (d.stageName || d.stage || '').toLowerCase();
-    if (!dStage.includes('closed')) continue;
-    // Try to match deal name to a person
-    const dealName = (d.name || '').toLowerCase();
-    const matchedPerson = peopleByName[dealName];
-    const source = matchedPerson ? (matchedPerson.source || 'Untagged') : 'Untagged';
-    const srcKey = source.trim() || 'Untagged';
-    if (!sourceMap[srcKey]) {
-      sourceMap[srcKey] = {
-        source: srcKey,
-        lead_count: 0, reached_count: 0, appointments: 0,
-        lender_sent: 0, closings: 0, closed_value: 0, revenue_per_lead: 0, close_rate_pct: 0
-      };
-    }
-    sourceMap[srcKey].closings++;
-    sourceMap[srcKey].closed_value += parseFloat(d.price) || 0;
-
-    // Also update per-agent source data
-    const dealUsers = d.users || [];
-    for (const du of dealUsers) {
-      const agent = agentMap[du.id];
-      if (!agent) continue;
-      if (!agent._source_data[srcKey]) {
-        agent._source_data[srcKey] = { source: srcKey, lead_count: 0, closings: 0, closed_value: 0 };
-      }
-      agent._source_data[srcKey].closings++;
-      agent._source_data[srcKey].closed_value += parseFloat(d.price) || 0;
-    }
-  }
-
-  // ---- Compute derived per-agent metrics ----
+  // ---- Step 10: Compute derived per-agent metrics ----
   const allJourneys = [];
   const agentList = [];
 
   for (const agent of Object.values(agentMap)) {
-    // Time-based rates
     agent.talk_hours = Math.round((agent.talk_seconds / 3600) * 10) / 10;
     agent.calls_per_week = Math.round(agent.calls_outbound / weeks);
     agent.conversations_per_week = Math.round(agent.calls_connected / weeks);
@@ -470,7 +537,6 @@ function computeMetrics(raw, config) {
       ? (targets.calls_per_week_isa > 0 ? Math.round(agent.calls_per_week / targets.calls_per_week_isa * 100) : 0)
       : (targets.calls_per_week_agent > 0 ? Math.round(agent.calls_per_week / targets.calls_per_week_agent * 100) : 0);
 
-    // Conversion rates
     agent.reach_rate_pct = agent.leads_assigned > 0
       ? Math.round(agent.leads_reached / agent.leads_assigned * 1000) / 10 : 0;
     agent.quality_rate_pct = agent.leads_assigned > 0
@@ -478,7 +544,6 @@ function computeMetrics(raw, config) {
     agent.lender_referral_rate_pct = agent.appointments_set > 0
       ? Math.round(agent.lender_sent / agent.appointments_set * 1000) / 10 : 0;
 
-    // Efficiency
     agent.calls_per_appointment = agent.appointments_set > 0
       ? Math.round(agent.calls_outbound / agent.appointments_set) : null;
     agent.leads_per_closing = agent.closed_deals > 0
@@ -486,35 +551,33 @@ function computeMetrics(raw, config) {
     agent.appointments_per_closing = agent.closed_deals > 0
       ? Math.round(agent.appointments_set / agent.closed_deals) : null;
 
-    // Speed to lead
     agent.speed_to_lead_avg_minutes = agent._lead_speeds.length > 0
       ? Math.round(agent._lead_speeds.reduce((a, b) => a + b, 0) / agent._lead_speeds.length * 10) / 10
       : null;
 
-    // Top sources
     agent.top_sources = Object.values(agent._source_data)
       .sort((a, b) => b.lead_count - a.lead_count)
       .slice(0, 5);
 
-    // Collect journeys
     allJourneys.push(...agent._closed_journeys);
 
-    // Clean up internal tracking fields
+    // Clean up internal fields
     delete agent._lead_speeds;
     delete agent._source_data;
     delete agent._closed_journeys;
+    delete agent._assigned_person_ids;
 
     agentList.push(agent);
   }
 
-  // ---- Compute source quality stats ----
+  // ---- Step 11: Source quality stats ----
   const sources = Object.values(sourceMap).map(s => {
     s.close_rate_pct = s.lead_count > 0 ? Math.round(s.closings / s.lead_count * 1000) / 10 : 0;
     s.revenue_per_lead = s.lead_count > 0 ? Math.round(s.closed_value / s.lead_count) : 0;
     return s;
   });
 
-  // ---- Compute team-wide metrics ----
+  // ---- Step 12: Team-wide metrics ----
   const team = {
     leads_assigned: agentList.reduce((s, a) => s + a.leads_assigned, 0),
     leads_reached: agentList.reduce((s, a) => s + a.leads_reached, 0),
@@ -532,7 +595,6 @@ function computeMetrics(raw, config) {
     never_called_count: agentList.reduce((s, a) => s + a.never_called_count, 0),
   };
 
-  // Team rates
   team.reach_rate_pct = team.leads_assigned > 0
     ? Math.round(team.leads_reached / team.leads_assigned * 1000) / 10 : 0;
   team.quality_rate_pct = team.leads_assigned > 0
@@ -550,7 +612,7 @@ function computeMetrics(raw, config) {
   team.appointments_per_closing = team.closed_deals > 0 ? Math.round(team.appointments_set / team.closed_deals) : null;
   team.lender_refs_per_closing = team.closed_deals > 0 ? Math.round(team.lender_sent / team.closed_deals) : null;
 
-  // Weekly averages (per agent, excluding ISAs for agent metrics)
+  // Weekly averages (per agent, excluding ISAs)
   const agentsOnly = agentList.filter(a => !a.is_isa);
   const agentCount = agentsOnly.length || 1;
   team.calls_per_week_avg = Math.round(agentsOnly.reduce((s, a) => s + a.calls_per_week, 0) / agentCount);
@@ -561,37 +623,36 @@ function computeMetrics(raw, config) {
   team.speed_to_lead_avg = allSpeeds.length > 0
     ? Math.round(allSpeeds.reduce((a, b) => a + b, 0) / allSpeeds.length * 10) / 10 : null;
 
-  // Current week calls (approximate: last 7 days of calls)
+  // Current week outbound calls
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
   team.calls_outbound_this_week = calls.filter(c =>
-    c.isIncoming === false &&
-    new Date(c.created) >= weekAgo
+    c.isIncoming === false && new Date(c.created) >= weekAgo
   ).length;
 
-  // ---- Winning path from closed journeys ----
+  // ---- Winning path ----
   const winningPath = computeWinningPath(allJourneys);
 
-  // ---- Pipeline opportunity buckets ----
-  const pipeline = computePipelineOpportunity(people, callsByPerson, thresholds);
+  // ---- Pipeline opportunity ----
+  const pipeline = computePipelineOpportunity(people, callsByPerson, excludedSources, thresholds);
 
-  // ---- Compute badges ----
+  // ---- Badges ----
   computeBadges(agentList, team);
 
-  // Diagnostic summary
-  console.log('=== METRIC SUMMARY ===');
-  console.log(`Agents: ${agentList.length}`);
-  console.log(`Team leads_assigned: ${team.leads_assigned}`);
-  console.log(`Team calls_outbound: ${team.calls_outbound}`);
-  console.log(`Team calls_connected: ${team.calls_connected}`);
-  console.log(`Team appointments_set: ${team.appointments_set}`);
-  console.log(`Team closed_deals: ${team.closed_deals}`);
-  console.log(`Team closed_value: ${team.closed_value}`);
-  console.log(`Team reach_rate: ${team.reach_rate_pct}%`);
-  console.log(`Team lender_sent: ${team.lender_sent}`);
+  // ---- Validation ----
+  console.log('=== VALIDATION ===');
+  console.log(`Active leads (clean): ${team.leads_assigned} (expected ~5,462)`);
+  console.log(`Outbound calls (period): ${team.calls_outbound} (expected ~36,092)`);
+  console.log(`Appointments: ${team.appointments_set} (expected ~644)`);
+  console.log(`Closed deals: ${team.closed_deals} (expected ~61)`);
+  console.log(`Closed value: $${team.closed_value.toLocaleString()} (expected ~$34,334,859)`);
+  console.log(`Team reach rate: ${team.reach_rate_pct}% (expected ~39%)`);
+  console.log(`Talk hours: ${team.talk_hours} (expected ~245)`);
+  console.log(`Lender sent: ${team.lender_sent}`);
+  console.log(`Quality leads: ${agentList.reduce((s, a) => s + a.quality_leads, 0)}`);
   for (const a of agentList) {
     if (a.leads_assigned > 0 || a.calls_outbound > 0 || a.closed_deals > 0) {
-      console.log(`  ${a.name}: leads=${a.leads_assigned} calls_out=${a.calls_outbound} connected=${a.calls_connected} appts=${a.appointments_set} closed=${a.closed_deals} value=${a.closed_value} reach=${a.reach_rate_pct}%`);
+      console.log(`  ${a.name}: leads=${a.leads_assigned} reached=${a.leads_reached} calls_out=${a.calls_outbound} connected=${a.calls_connected} appts=${a.appointments_set} quality=${a.quality_leads} lender=${a.lender_sent} closed=${a.closed_deals} value=${a.closed_value}`);
     }
   }
 
@@ -612,37 +673,28 @@ function computeMetrics(raw, config) {
 function computeWinningPath(journeys) {
   if (journeys.length === 0) {
     return {
-      avg_speed_to_contact_min: null,
-      avg_calls_to_connect: null,
-      avg_days_to_appointment: null,
-      avg_appts_to_lender: null,
-      avg_days_lender_to_close: null,
-      top_source_closed: null,
-      sample_size: 0
+      avg_speed_to_contact_min: null, avg_calls_to_connect: null,
+      avg_days_to_appointment: null, avg_appts_to_lender: null,
+      avg_days_lender_to_close: null, top_source_closed: null, sample_size: 0
     };
   }
 
   const speeds = journeys.filter(j => j.speed_to_contact_min != null).map(j => j.speed_to_contact_min);
   const callsToConnect = journeys.map(j => j.calls_to_connect).filter(v => v > 0);
-  const daysToAppt = journeys.filter(j => j.days_to_appointment != null).map(j => j.days_to_appointment);
   const daysLenderToClose = journeys.filter(j => j.days_lender_to_close != null).map(j => j.days_lender_to_close);
 
-  // Top source
   const sourceCounts = {};
   for (const j of journeys) {
     sourceCounts[j.source] = (sourceCounts[j.source] || 0) + 1;
   }
   const topSource = Object.entries(sourceCounts).sort((a, b) => b[1] - a[1])[0];
-
-  // Appts to lender: count of journeys with lender tag / total
   const lenderCount = journeys.filter(j => j.lender_tag).length;
 
   return {
     avg_speed_to_contact_min: avg(speeds),
     avg_calls_to_connect: avg(callsToConnect),
-    avg_days_to_appointment: avg(daysToAppt),
-    avg_appts_to_lender: journeys.length > 0 && lenderCount > 0
-      ? Math.round(journeys.filter(j => j.first_appt_date).length / lenderCount * 10) / 10 : null,
+    avg_days_to_appointment: null, // Can't compute without person-appointment join date
+    avg_appts_to_lender: lenderCount > 0 ? Math.round(journeys.length / lenderCount * 10) / 10 : null,
     avg_days_lender_to_close: avg(daysLenderToClose),
     top_source_closed: topSource ? topSource[0] : null,
     sample_size: journeys.length
@@ -657,10 +709,10 @@ function avg(arr) {
 // ---------------------------------------------------------------------------
 // Pipeline opportunity
 // ---------------------------------------------------------------------------
-function computePipelineOpportunity(people, callsByPerson, thresholds) {
+function computePipelineOpportunity(people, callsByPerson, excludedSources, thresholds) {
   const staleDays = thresholds.stale_lead_days || 30;
   const now = Date.now();
-  const avgDealValue = 300000; // Default estimate for pipeline valuation
+  const avgDealValue = 300000;
 
   let neverContacted = { count: 0, value: 0 };
   let reachedNoAppt = { count: 0, value: 0 };
@@ -669,41 +721,47 @@ function computePipelineOpportunity(people, callsByPerson, thresholds) {
   let staleCount = 0;
 
   for (const p of people) {
+    const src = (p.source || '').toLowerCase().trim();
+    if (excludedSources.some(ex => src === ex.toLowerCase())) continue;
+
     const stage = (p.stage || '').toLowerCase();
-    if (stage.includes('closed') || stage.includes('archive')) continue;
+    if (stage.includes('closed') || stage.includes('close') || stage.includes('archive')) continue;
 
     const personCalls = callsByPerson[p.id] || [];
     const outboundCalls = personCalls.filter(c => c.isIncoming === false);
-    const connectedCalls = outboundCalls.filter(c => (c.duration || 0) > 0);
     const tags = p.tags || [];
-    const hasLender = tags.some(t => (typeof t === 'string' ? t : (t.name || '')).toLowerCase().includes('lender'));
-
-    // Use person's deal stage from the people record for funnel position
-    const dealStage = (p.dealStage || '').toLowerCase();
-    const hasAppt = stage.includes('spoke') || stage.includes('hot') || stage.includes('warm') ||
-                    stage.includes('pending') || dealStage.includes('pending') || hasLender;
+    const hasLender = tags.some(t =>
+      typeof t === 'string' &&
+      (t.toLowerCase().includes('lender application') || t.toLowerCase().includes('lender - green'))
+    );
 
     const leadValue = parseFloat(p.price) || avgDealValue * 0.02;
 
-    // Stale check
+    // Stale
     const lastAct = p.lastActivity || p.updated;
     if (lastAct) {
       const daysSince = (now - new Date(lastAct).getTime()) / (1000 * 60 * 60 * 24);
       if (daysSince > staleDays) staleCount++;
     }
 
+    // Funnel position
     if (outboundCalls.length === 0) {
       neverContacted.count++;
       neverContacted.value += leadValue;
-    } else if (connectedCalls.length === 0) {
+    } else if (p.contacted !== true) {
+      // Called but not reached
       reachedNoAppt.count++;
       reachedNoAppt.value += leadValue;
-    } else if (!hasAppt && !hasLender) {
-      reachedNoAppt.count++;
-      reachedNoAppt.value += leadValue;
-    } else if (hasAppt && !hasLender) {
-      apptNoLender.count++;
-      apptNoLender.value += leadValue;
+    } else if (p.contacted === true && !hasLender) {
+      // Reached but no lender tag — could have appt or not
+      const advancedStage = stage.includes('spoke') || stage.includes('hot') || stage.includes('warm') || stage.includes('pending');
+      if (advancedStage) {
+        apptNoLender.count++;
+        apptNoLender.value += leadValue;
+      } else {
+        reachedNoAppt.count++;
+        reachedNoAppt.value += leadValue;
+      }
     } else if (hasLender) {
       lenderNotClosed.count++;
       lenderNotClosed.value += leadValue;
@@ -728,69 +786,46 @@ function computePipelineOpportunity(people, callsByPerson, thresholds) {
 // ---------------------------------------------------------------------------
 function computeBadges(agents, team) {
   const agentsOnly = agents.filter(a => !a.is_isa && !a.is_leader);
-  const allActive = agents.filter(a => a.leads_assigned > 0);
+  const allActive = agents.filter(a => a.leads_assigned > 0 || a.calls_outbound > 0);
 
-  for (const a of agents) {
-    a.badges = [];
-  }
+  for (const a of agents) a.badges = [];
+  if (allActive.length === 0) return;
 
-  if (agentsOnly.length === 0 && allActive.length === 0) return;
+  // Gold
+  const byValue = [...agentsOnly].sort((a, b) => (b.closed_value || 0) - (a.closed_value || 0));
+  if (byValue.length && byValue[0].closed_value > 0) byValue[0].badges.push({ tier: 'gold', name: 'Volume King' });
 
-  // Gold badges (agents only, excluding ISA)
-  const byClosedValue = [...agentsOnly].sort((a, b) => (b.closed_value || 0) - (a.closed_value || 0));
-  if (byClosedValue.length && byClosedValue[0].closed_value > 0) {
-    byClosedValue[0].badges.push({ tier: 'gold', name: 'Volume King' });
-  }
-
-  const teamQualityRate = team.quality_rate_pct || 0;
+  const teamQR = team.quality_rate_pct || 0;
   for (const a of allActive) {
-    if (a.quality_rate_pct > teamQualityRate && a.quality_rate_pct > 0) {
-      a.badges.push({ tier: 'gold', name: 'Quality Machine' });
-    }
+    if (a.quality_rate_pct > teamQR && a.quality_rate_pct > 0) a.badges.push({ tier: 'gold', name: 'Quality Machine' });
   }
 
-  const byClosedDeals = [...agentsOnly].sort((a, b) => (b.closed_deals || 0) - (a.closed_deals || 0));
-  if (byClosedDeals.length && byClosedDeals[0].closed_deals > 0) {
-    byClosedDeals[0].badges.push({ tier: 'gold', name: 'Closing Machine' });
-  }
+  const byDeals = [...agentsOnly].sort((a, b) => (b.closed_deals || 0) - (a.closed_deals || 0));
+  if (byDeals.length && byDeals[0].closed_deals > 0) byDeals[0].badges.push({ tier: 'gold', name: 'Closing Machine' });
 
-  // Silver badges
-  const byCallsOut = [...allActive].sort((a, b) => (b.calls_outbound || 0) - (a.calls_outbound || 0));
-  if (byCallsOut.length && byCallsOut[0].calls_outbound > 0) {
-    byCallsOut[0].badges.push({ tier: 'silver', name: 'Phone Warrior' });
-  }
+  // Silver
+  const byCalls = [...allActive].sort((a, b) => (b.calls_outbound || 0) - (a.calls_outbound || 0));
+  if (byCalls.length && byCalls[0].calls_outbound > 0) byCalls[0].badges.push({ tier: 'silver', name: 'Phone Warrior' });
 
   const byAppts = [...allActive].sort((a, b) => (b.appointments_set || 0) - (a.appointments_set || 0));
-  if (byAppts.length && byAppts[0].appointments_set > 0) {
-    byAppts[0].badges.push({ tier: 'silver', name: 'Appointment Setter' });
-  }
+  if (byAppts.length && byAppts[0].appointments_set > 0) byAppts[0].badges.push({ tier: 'silver', name: 'Appointment Setter' });
 
   const withCPA = allActive.filter(a => a.calls_per_appointment != null && a.calls_per_appointment > 0);
   const byCPA = [...withCPA].sort((a, b) => a.calls_per_appointment - b.calls_per_appointment);
-  if (byCPA.length) {
-    byCPA[0].badges.push({ tier: 'silver', name: 'Speed Demon' });
-  }
+  if (byCPA.length) byCPA[0].badges.push({ tier: 'silver', name: 'Speed Demon' });
 
   const byLender = [...allActive].sort((a, b) => (b.lender_sent || 0) - (a.lender_sent || 0));
-  if (byLender.length && byLender[0].lender_sent > 0) {
-    byLender[0].badges.push({ tier: 'silver', name: 'Lender Connector' });
-  }
+  if (byLender.length && byLender[0].lender_sent > 0) byLender[0].badges.push({ tier: 'silver', name: 'Lender Connector' });
 
-  // Bronze badges
+  // Bronze
   const byReach = [...allActive].sort((a, b) => (b.reach_rate_pct || 0) - (a.reach_rate_pct || 0));
-  if (byReach.length && byReach[0].reach_rate_pct > 0) {
-    byReach[0].badges.push({ tier: 'bronze', name: 'Reach Master' });
-  }
+  if (byReach.length && byReach[0].reach_rate_pct > 0) byReach[0].badges.push({ tier: 'bronze', name: 'Reach Master' });
 
   const byPipeline = [...allActive].sort((a, b) => (b.pipeline_active_count || 0) - (a.pipeline_active_count || 0));
-  if (byPipeline.length && byPipeline[0].pipeline_active_count > 0) {
-    byPipeline[0].badges.push({ tier: 'bronze', name: 'Pipeline Builder' });
-  }
+  if (byPipeline.length && byPipeline[0].pipeline_active_count > 0) byPipeline[0].badges.push({ tier: 'bronze', name: 'Pipeline Builder' });
 
-  const byTalkHours = [...allActive].sort((a, b) => (b.talk_hours || 0) - (a.talk_hours || 0));
-  if (byTalkHours.length && byTalkHours[0].talk_hours > 0) {
-    byTalkHours[0].badges.push({ tier: 'bronze', name: 'Talk Time Champ' });
-  }
+  const byTalk = [...allActive].sort((a, b) => (b.talk_hours || 0) - (a.talk_hours || 0));
+  if (byTalk.length && byTalk[0].talk_hours > 0) byTalk[0].badges.push({ tier: 'bronze', name: 'Talk Time Champ' });
 }
 
 module.exports = { fetchAllData };
