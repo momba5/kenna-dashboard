@@ -13,7 +13,6 @@ const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const BASE = '/fub-insights';
 
 // ---------------------------------------------------------------------------
 // Config
@@ -61,7 +60,7 @@ app.set('trust proxy', 1);
 // ---------------------------------------------------------------------------
 // Static files
 // ---------------------------------------------------------------------------
-app.use(`${BASE}/public`, express.static(path.join(__dirname, 'public')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // ---------------------------------------------------------------------------
 // Auth helpers
@@ -70,33 +69,33 @@ function requireAuth(req, res, next) {
   if (req.session && req.session.authenticated) {
     return next();
   }
-  return res.redirect(`${BASE}/login`);
+  return res.redirect('/login');
 }
 
 // ---------------------------------------------------------------------------
 // Login routes
 // ---------------------------------------------------------------------------
-app.get(`${BASE}/login`, (req, res) => {
+app.get('/login', (req, res) => {
   const error = req.query.error === '1' ? 'Almost! Give that password another shot — you\'ve got this.' : null;
   res.send(renderLogin(error));
 });
 
-app.post(`${BASE}/login`, async (req, res) => {
+app.post('/login', async (req, res) => {
   const { password } = req.body;
   if (!password || !passwordHash) {
-    return res.redirect(`${BASE}/login?error=1`);
+    return res.redirect('/login?error=1');
   }
   const match = await bcrypt.compare(password, passwordHash);
   if (match) {
     req.session.authenticated = true;
-    return res.redirect(BASE);
+    return res.redirect('/');
   }
-  return res.redirect(`${BASE}/login?error=1`);
+  return res.redirect('/login?error=1');
 });
 
-app.get(`${BASE}/logout`, (req, res) => {
+app.get('/logout', (req, res) => {
   req.session.destroy(() => {
-    res.redirect(`${BASE}/login`);
+    res.redirect('/login');
   });
 });
 
@@ -157,7 +156,7 @@ async function runRefresh() {
 // ---------------------------------------------------------------------------
 // Debug endpoint (no auth — temporary for development)
 // ---------------------------------------------------------------------------
-app.get(`${BASE}/api/debug`, (req, res) => {
+app.get('/api/debug', (req, res) => {
   const debugPath = path.join(__dirname, 'debug-raw.json');
   if (!fs.existsSync(debugPath)) {
     return res.json({ error: 'No debug data yet — trigger a refresh first' });
@@ -185,13 +184,13 @@ function requireApiKey(req, res, next) {
   return next();
 }
 
-app.get(`${BASE}/api/refresh`, requireApiKey, (req, res) => {
+app.get('/api/refresh', requireApiKey, (req, res) => {
   // Return immediately, run refresh in background
   runRefresh();
   res.json({ message: 'Refresh started', startedAt: refreshState.startedAt });
 });
 
-app.get(`${BASE}/api/status`, (req, res) => {
+app.get('/api/status', (req, res) => {
   const config = loadConfig();
   const staleDays = config.thresholds.data_stale_warning_days;
   let isStale = false;
@@ -216,7 +215,7 @@ app.get(`${BASE}/api/status`, (req, res) => {
 // ---------------------------------------------------------------------------
 // Dashboard route (auth required)
 // ---------------------------------------------------------------------------
-app.get(BASE, requireAuth, async (req, res) => {
+app.get('/', requireAuth, async (req, res) => {
   const dataPath = path.join(__dirname, 'data.json');
   let data = null;
 
@@ -244,9 +243,10 @@ app.get(BASE, requireAuth, async (req, res) => {
   res.send(renderDashboard(data, config, reminders, refreshState));
 });
 
-// Redirect bare path without trailing concerns
-app.get(`${BASE}/`, requireAuth, (req, res) => {
-  res.redirect(BASE);
+// Legacy /fub-insights redirects for bookmarks
+app.get('/fub-insights*', (req, res) => {
+  const newPath = req.originalUrl.replace('/fub-insights', '') || '/';
+  res.redirect(301, newPath);
 });
 
 // ---------------------------------------------------------------------------
@@ -276,9 +276,9 @@ async function start() {
   scheduleCron();
 
   app.listen(PORT, () => {
-    console.log(`Kenna Dashboard v1.1 running on port ${PORT}`);
-    console.log(`Dashboard: http://localhost:${PORT}${BASE}`);
-    console.log(`Login: http://localhost:${PORT}${BASE}/login`);
+    console.log(`Kenna Dashboard v1.2 running on port ${PORT}`);
+    console.log(`Dashboard: http://localhost:${PORT}/`);
+    console.log(`Login: http://localhost:${PORT}/login`);
   });
 }
 

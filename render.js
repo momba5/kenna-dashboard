@@ -1,4 +1,4 @@
-const BASE = '/fub-insights';
+const BASE = ''; // root-mounted (was /fub-insights)
 const LOGO = 'https://yourbrand.io/wp-content/uploads/2026/03/kenna-logo-2-scaled.png';
 const BADGE_ICON = 'https://yourbrand.io/wp-content/uploads/2026/03/achievement-2.png';
 const FROG_CTA = 'https://yourbrand.io/wp-content/uploads/2026/03/kenna-frog-CTA.png';
