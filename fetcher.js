@@ -125,8 +125,8 @@ async function fetchAllData(config) {
   //       using the updatedAfter parameter. Store last pull timestamp and
   //       only fetch people updated since then, merging into cached data.
   //       Current full pull works fine for single-client use.
-  console.log('Pulling /people (all — no date filter)...');
-  const people = await fetchOffset('/people', apiKey, { sort: 'created' });
+  console.log('Pulling /people (post-migration, createdAfter=2025-07-01)...');
+  const people = await fetchOffset('/people', apiKey, { sort: 'created', createdAfter: '2025-07-01' });
 
   // 3. Calls — cursor pagination ONLY (offset caps at 2000)
   //    dateAfter param does NOT work — pull ALL calls, filter locally
@@ -296,8 +296,10 @@ function computeMetrics(raw, config) {
     const stageLower = stage.toLowerCase();
     agent.stage_distribution[stage] = (agent.stage_distribution[stage] || 0) + 1;
 
-    // Pipeline active: not closed/close, not archived
-    if (!stageLower.includes('closed') && !stageLower.includes('close') && !stageLower.includes('archive')) {
+    // Pipeline active: exclude closed, archived, and imported stages
+    const isActivePipeline = !stageLower.includes('closed') && !stageLower.includes('close')
+      && !stageLower.includes('archive') && !stageLower.includes('imported');
+    if (isActivePipeline) {
       agent.pipeline_active_count++;
     }
 
@@ -311,6 +313,7 @@ function computeMetrics(raw, config) {
     }
 
     // Reached: FUB contacted field is integer 0/1
+    // Only count reached against active pipeline leads for accurate reach rate
     if (p.contacted == 1) {
       agent.leads_reached++;
     }
@@ -483,8 +486,8 @@ function computeMetrics(raw, config) {
       ? (targets.calls_per_week_isa > 0 ? Math.round(agent.calls_per_week / targets.calls_per_week_isa * 100) : 0)
       : (targets.calls_per_week_agent > 0 ? Math.round(agent.calls_per_week / targets.calls_per_week_agent * 100) : 0);
 
-    agent.reach_rate_pct = agent.leads_assigned > 0
-      ? Math.round(agent.leads_reached / agent.leads_assigned * 1000) / 10 : 0;
+    agent.reach_rate_pct = agent.pipeline_active_count > 0
+      ? Math.round(agent.leads_reached / agent.pipeline_active_count * 1000) / 10 : 0;
     agent.quality_rate_pct = agent.leads_assigned > 0
       ? Math.round(agent.quality_leads / agent.leads_assigned * 1000) / 10 : 0;
     agent.lender_referral_rate_pct = agent.appointments_set > 0
@@ -540,8 +543,8 @@ function computeMetrics(raw, config) {
     never_called_count: agentList.reduce((s, a) => s + a.never_called_count, 0),
   };
 
-  team.reach_rate_pct = team.leads_assigned > 0
-    ? Math.round(team.leads_reached / team.leads_assigned * 1000) / 10 : 0;
+  team.reach_rate_pct = team.pipeline_active_count > 0
+    ? Math.round(team.leads_reached / team.pipeline_active_count * 1000) / 10 : 0;
   team.quality_rate_pct = team.leads_assigned > 0
     ? Math.round(agentList.reduce((s, a) => s + a.quality_leads, 0) / team.leads_assigned * 1000) / 10 : 0;
   team.lender_referral_rate_pct = team.appointments_set > 0
