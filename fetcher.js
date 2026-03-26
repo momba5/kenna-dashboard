@@ -131,6 +131,25 @@ async function fetchAllData(config) {
   // require per-person queries and /notes returns 168K+ records.
   // All three are skipped; earliest outbound call is used instead.
 
+  // Save raw data for debug endpoint
+  const fs = require('fs');
+  const path = require('path');
+  const rawDebug = {
+    people_count: people.length,
+    calls_count: calls.length,
+    appointments_count: appointments.length,
+    deals_count: deals.length,
+    users_count: users.length,
+    people_sample: people.slice(0, 5),
+    calls_sample: calls.slice(0, 5),
+    appointments_sample: appointments.slice(0, 5),
+    deals_sample: deals.slice(0, 5),
+    deal_stages: [...new Set(deals.map(d => d.stageName || d.stage || d.status || 'NONE'))],
+    people_stages: [...new Set(people.map(p => p.stage || 'NONE'))],
+  };
+  fs.writeFileSync(path.join(__dirname, 'debug-raw.json'), JSON.stringify(rawDebug, null, 2));
+  console.log('Saved debug-raw.json');
+
   // Build computed metrics
   console.log('Computing metrics...');
   return computeMetrics({ users, people, calls, appointments, deals }, config);

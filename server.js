@@ -151,6 +151,22 @@ async function runRefresh() {
 }
 
 // ---------------------------------------------------------------------------
+// Debug endpoint (no auth — temporary for development)
+// ---------------------------------------------------------------------------
+app.get(`${BASE}/api/debug`, (req, res) => {
+  const debugPath = path.join(__dirname, 'debug-raw.json');
+  if (!fs.existsSync(debugPath)) {
+    return res.json({ error: 'No debug data yet — trigger a refresh first' });
+  }
+  try {
+    const raw = JSON.parse(fs.readFileSync(debugPath, 'utf8'));
+    res.json(raw);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // API routes (protected by API key)
 // ---------------------------------------------------------------------------
 function requireApiKey(req, res, next) {
