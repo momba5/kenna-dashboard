@@ -764,33 +764,51 @@ function stageBucketSimple(stage) {
 }
 
 // ---------------------------------------------------------------------------
-// Badges
+// Badges — one winner per badge, ties award to all, gold never to ISAs
 // ---------------------------------------------------------------------------
 function computeBadges(agents, team) {
-  const ao = agents.filter(a => !a.is_isa && !a.is_leader);
-  const active = agents.filter(a => a.leads_assigned > 0 || a.calls_outbound > 0);
   for (const a of agents) a.badges = [];
+
+  const active = agents.filter(a => a.leads_assigned > 0 || a.calls_outbound > 0);
   if (!active.length) return;
-  const byV = [...ao].sort((a, b) => (b.closed_value || 0) - (a.closed_value || 0));
-  if (byV.length && byV[0].closed_value > 0) byV[0].badges.push({ tier: 'gold', name: 'Volume King' });
-  for (const a of active) if (a.quality_rate_pct > (team.quality_rate_pct || 0) && a.quality_rate_pct > 0) a.badges.push({ tier: 'gold', name: 'Quality Machine' });
-  const byD = [...ao].sort((a, b) => (b.closed_deals || 0) - (a.closed_deals || 0));
-  if (byD.length && byD[0].closed_deals > 0) byD[0].badges.push({ tier: 'gold', name: 'Closing Machine' });
-  const byC = [...active].sort((a, b) => (b.calls_outbound || 0) - (a.calls_outbound || 0));
-  if (byC.length && byC[0].calls_outbound > 0) byC[0].badges.push({ tier: 'silver', name: 'Phone Warrior' });
-  const byA = [...active].sort((a, b) => (b.appointments_set || 0) - (a.appointments_set || 0));
-  if (byA.length && byA[0].appointments_set > 0) byA[0].badges.push({ tier: 'silver', name: 'Appointment Setter' });
-  const wC = active.filter(a => a.calls_per_appointment != null && a.calls_per_appointment > 0);
-  const byCPA = [...wC].sort((a, b) => a.calls_per_appointment - b.calls_per_appointment);
-  if (byCPA.length) byCPA[0].badges.push({ tier: 'silver', name: 'Speed Demon' });
-  const byL = [...active].sort((a, b) => (b.lender_sent || 0) - (a.lender_sent || 0));
-  if (byL.length && byL[0].lender_sent > 0) byL[0].badges.push({ tier: 'silver', name: 'Lender Connector' });
-  const byR = [...active].sort((a, b) => (b.reach_rate_pct || 0) - (a.reach_rate_pct || 0));
-  if (byR.length && byR[0].reach_rate_pct > 0) byR[0].badges.push({ tier: 'bronze', name: 'Reach Master' });
-  const byP = [...active].sort((a, b) => (b.pipeline_active_count || 0) - (a.pipeline_active_count || 0));
-  if (byP.length && byP[0].pipeline_active_count > 0) byP[0].badges.push({ tier: 'bronze', name: 'Pipeline Builder' });
-  const byT = [...active].sort((a, b) => (b.talk_hours || 0) - (a.talk_hours || 0));
-  if (byT.length && byT[0].talk_hours > 0) byT[0].badges.push({ tier: 'bronze', name: 'Talk Time Champ' });
+
+  // Gold-eligible: non-ISA agents only
+  const goldPool = active.filter(a => !a.is_isa);
+
+  // Award badge to all agents tied for the best value (highest or lowest)
+  // Returns without awarding if best value is zero
+  function award(pool, field, tier, name, lowest) {
+    if (!pool.length) return;
+    const sorted = [...pool].sort((a, b) =>
+      lowest ? (a[field] || 0) - (b[field] || 0) : (b[field] || 0) - (a[field] || 0)
+    );
+    const best = sorted[0][field] || 0;
+    if (best === 0) return;
+    for (const a of sorted) {
+      if ((a[field] || 0) === best) a.badges.push({ tier, name });
+      else break;
+    }
+  }
+
+  // Gold badges (agents only, not ISA)
+  award(goldPool, 'closed_value', 'gold', 'Volume King');
+  award(goldPool, 'closed_deals', 'gold', 'Closing Machine');
+  // Quality Machine: highest quality_rate among gold-eligible, must be above team avg
+  const qualPool = goldPool.filter(a => a.quality_rate_pct > (team.quality_rate_pct || 0));
+  award(qualPool, 'quality_rate_pct', 'gold', 'Quality Machine');
+
+  // Silver badges (all active agents)
+  award(active, 'calls_outbound', 'silver', 'Phone Warrior');
+  award(active, 'appointments_set', 'silver', 'Appointment Setter');
+  award(active, 'lender_sent', 'silver', 'Lender Connector');
+  // Speed Demon: lowest calls_per_appointment (most efficient)
+  const withCPA = active.filter(a => a.calls_per_appointment != null && a.calls_per_appointment > 0);
+  award(withCPA, 'calls_per_appointment', 'silver', 'Speed Demon', true);
+
+  // Bronze badges (all active agents)
+  award(active, 'reach_rate_pct', 'bronze', 'Reach Master');
+  award(active, 'pipeline_active_count', 'bronze', 'Pipeline Builder');
+  award(active, 'talk_hours', 'bronze', 'Talk Time Champ');
 }
 
 module.exports = { fetchAllData };
