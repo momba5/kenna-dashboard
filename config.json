@@ -19,5 +19,6 @@
     "anomaly_ratio_multiplier": 2
   },
   "refresh_schedule": "0 6 * * 1",
-  "isa_role_names": ["ISA", "Inside Sales", "Inside Sales Agent"]
+  "isa_role_names": ["ISA", "Inside Sales", "Inside Sales Agent"],
+  "migration_date": "2025-07-01"
 }
