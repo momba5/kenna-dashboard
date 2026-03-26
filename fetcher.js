@@ -121,6 +121,10 @@ async function fetchAllData(config) {
   // 2. People — offset pagination, pull ALL (no date filter)
   //    Need all active pipeline leads regardless of creation date.
   //    Calls/appointments/deals are still filtered to 90-day window.
+  // TODO: For multi-client scalability, convert to incremental delta pulls
+  //       using the updatedAfter parameter. Store last pull timestamp and
+  //       only fetch people updated since then, merging into cached data.
+  //       Current full pull works fine for single-client use.
   console.log('Pulling /people (all — no date filter)...');
   const people = await fetchOffset('/people', apiKey, { sort: 'created' });
 
@@ -584,7 +588,8 @@ function computeMetrics(raw, config) {
   // VALIDATION — stop here if numbers are wrong
   // ==================================================================
   console.log('=== VALIDATION ===');
-  console.log(`Clean leads:     ${team.leads_assigned}  (expect ~5,462)`);
+  console.log(`All clean leads: ${team.leads_assigned}`);
+  console.log(`Pipeline active: ${team.pipeline_active_count}  (expect ~5,462)`);
   console.log(`Outbound calls:  ${team.calls_outbound}  (expect ~36,092)`);
   console.log(`Appointments:    ${team.appointments_set}  (expect ~644)`);
   console.log(`Closed deals:    ${team.closed_deals}  (expect ~61)`);
