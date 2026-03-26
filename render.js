@@ -44,12 +44,12 @@ function pctColor(val, target, higherIsBetter = true) {
   if (val == null || target == null) return '';
   const ratio = val / target;
   if (higherIsBetter) {
-    if (ratio >= 1) return 'green';
-    if (ratio >= 0.7) return 'amber';
+    if (ratio >= 0.8) return 'green';
+    if (ratio >= 0.5) return 'amber';
     return 'red';
   }
   if (ratio <= 1) return 'green';
-  if (ratio <= 1.3) return 'amber';
+  if (ratio <= 1.5) return 'amber';
   return 'red';
 }
 
@@ -251,7 +251,7 @@ function renderHealthSnapshot(data, config) {
 // Section 2 — Winning Path
 // ---------------------------------------------------------------------------
 function renderWinningPath(data) {
-  const wp = (data.insights && data.insights.winningPath) || {};
+  const wp = data.winningPath || (data.insights && data.insights.winningPath) || {};
   const narrative = (data.insights && data.insights.winningPathNarrative) || '';
 
   const steps = [
@@ -316,7 +316,7 @@ function renderFunnelSection(data, config) {
 
   // Targets vs Actual table
   const comparisons = [
-    { metric: 'Calls/Week (Agent)', actual: t.calls_per_week_avg, target: targets.calls_per_week_agent },
+    { metric: 'Calls This Week (Avg/Agent)', actual: Math.round((t.calls_outbound_this_week || 0) / ((data.agents || []).filter(a => !a.is_isa).length || 1)), target: targets.calls_per_week_agent },
     { metric: 'Conversations/Week', actual: t.conversations_per_week_avg, target: targets.conversations_per_week },
     { metric: 'Lead-to-Close / 100', actual: t.lead_to_close_per_100, target: targets.lead_to_close_per_100 },
     { metric: 'Speed to Lead (min)', actual: t.speed_to_lead_avg, target: targets.speed_to_lead_minutes, lower: true },
@@ -328,7 +328,7 @@ function renderFunnelSection(data, config) {
       ? pctColor(c.actual, c.target, false)
       : pctColor(c.actual, c.target, true);
     const chipClass = color === 'green' ? 'chip-green' : color === 'amber' ? 'chip-amber' : 'chip-red';
-    const status = color === 'green' ? 'On Track' : color === 'amber' ? 'Close' : 'Needs Focus';
+    const status = color === 'green' ? 'On Track' : color === 'amber' ? 'Building' : 'Opportunity';
     return `<tr>
       <td>${c.metric}</td>
       <td style="font-weight:700">${c.lower ? fmtTime(c.actual) : (c.metric.includes('%') ? fmtPct(c.actual) : fmt(c.actual))}</td>

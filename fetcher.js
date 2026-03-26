@@ -337,16 +337,22 @@ function computeMetrics(raw, config) {
     if (outbound.length === 0) agent.never_called_count++;
     if (inbound.length === 0) agent.never_responded_count++;
 
-    // Speed to lead: person.created → earliest outbound call
-    if (outbound.length > 0) {
-      const leadCreated = new Date(p.created).getTime();
+    // Speed to lead: person.created → first outbound call
+    // Only for leads created in last 90 days, cap at 72 hours
+    const leadCreatedMs = new Date(p.created).getTime();
+    const ninetyDaysAgo = now - (90 * 24 * 60 * 60 * 1000);
+    if (outbound.length > 0 && leadCreatedMs >= ninetyDaysAgo) {
       let earliest = Infinity;
       for (const c of outbound) {
         const t = new Date(c.created).getTime();
         if (t < earliest) earliest = t;
       }
-      if (earliest > leadCreated) {
-        agent._lead_speeds.push((earliest - leadCreated) / 60000);
+      if (earliest > leadCreatedMs) {
+        const speedMin = (earliest - leadCreatedMs) / 60000;
+        // Cap at 72 hours (4320 min) — anything over means lead wasn't properly contacted
+        if (speedMin <= 4320) {
+          agent._lead_speeds.push(speedMin);
+        }
       }
     }
 
@@ -376,11 +382,22 @@ function computeMetrics(raw, config) {
   // STEP 7 — Process calls per agent
   // FUB: isIncoming (bool), duration (sec), userId (agent ID)
   // ==================================================================
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const weekAgoMs = weekAgo.getTime();
+
   for (const c of calls) {
     const agent = agentMap[c.userId];
     if (!agent) continue;
-    if (c.isIncoming === false) agent.calls_outbound++;
-    else if (c.isIncoming === true) agent.calls_inbound++;
+    const isOutbound = c.isIncoming === false;
+    if (isOutbound) {
+      agent.calls_outbound++;
+      if (new Date(c.created).getTime() >= weekAgoMs) {
+        agent.calls_this_week = (agent.calls_this_week || 0) + 1;
+      }
+    } else if (c.isIncoming === true) {
+      agent.calls_inbound++;
+    }
     if ((c.duration || 0) > 0) {
       agent.calls_connected++;
       agent.talk_seconds += c.duration;
@@ -480,7 +497,8 @@ function computeMetrics(raw, config) {
 
   for (const agent of Object.values(agentMap)) {
     agent.talk_hours = Math.round((agent.talk_seconds / 3600) * 10) / 10;
-    agent.calls_per_week = Math.round(agent.calls_outbound / weeks);
+    agent.calls_per_week = agent.calls_this_week || 0; // Current week actual calls
+    agent.calls_per_week_avg = Math.round(agent.calls_outbound / weeks); // 90-day average
     agent.conversations_per_week = Math.round(agent.calls_connected / weeks);
     agent.calls_vs_target_pct = agent.is_isa
       ? (targets.calls_per_week_isa > 0 ? Math.round(agent.calls_per_week / targets.calls_per_week_isa * 100) : 0)
