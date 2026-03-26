@@ -296,9 +296,9 @@ function computeMetrics(raw, config) {
     const stageLower = stage.toLowerCase();
     agent.stage_distribution[stage] = (agent.stage_distribution[stage] || 0) + 1;
 
-    // Pipeline active: exclude closed, archived, and imported stages
+    // Pipeline active: exclude closed and archived stages only
     const isActivePipeline = !stageLower.includes('closed') && !stageLower.includes('close')
-      && !stageLower.includes('archive') && !stageLower.includes('imported');
+      && !stageLower.includes('archive');
     if (isActivePipeline) {
       agent.pipeline_active_count++;
     }
@@ -486,8 +486,8 @@ function computeMetrics(raw, config) {
       ? (targets.calls_per_week_isa > 0 ? Math.round(agent.calls_per_week / targets.calls_per_week_isa * 100) : 0)
       : (targets.calls_per_week_agent > 0 ? Math.round(agent.calls_per_week / targets.calls_per_week_agent * 100) : 0);
 
-    agent.reach_rate_pct = agent.pipeline_active_count > 0
-      ? Math.round(agent.leads_reached / agent.pipeline_active_count * 1000) / 10 : 0;
+    agent.reach_rate_pct = agent.leads_assigned > 0
+      ? Math.round(agent.leads_reached / agent.leads_assigned * 1000) / 10 : 0;
     agent.quality_rate_pct = agent.leads_assigned > 0
       ? Math.round(agent.quality_leads / agent.leads_assigned * 1000) / 10 : 0;
     agent.lender_referral_rate_pct = agent.appointments_set > 0
@@ -543,8 +543,8 @@ function computeMetrics(raw, config) {
     never_called_count: agentList.reduce((s, a) => s + a.never_called_count, 0),
   };
 
-  team.reach_rate_pct = team.pipeline_active_count > 0
-    ? Math.round(team.leads_reached / team.pipeline_active_count * 1000) / 10 : 0;
+  team.reach_rate_pct = team.leads_assigned > 0
+    ? Math.round(team.leads_reached / team.leads_assigned * 1000) / 10 : 0;
   team.quality_rate_pct = team.leads_assigned > 0
     ? Math.round(agentList.reduce((s, a) => s + a.quality_leads, 0) / team.leads_assigned * 1000) / 10 : 0;
   team.lender_referral_rate_pct = team.appointments_set > 0
