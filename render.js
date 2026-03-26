@@ -254,13 +254,18 @@ function renderWinningPath(data) {
   const wp = data.winningPath || (data.insights && data.insights.winningPath) || {};
   const narrative = (data.insights && data.insights.winningPathNarrative) || '';
 
+  // Determine if calls-to-connect is from real closed deal data or a fallback
+  const callsValue = wp.avg_calls_to_connect != null ? Math.round(wp.avg_calls_to_connect) : null;
+  const callsDisplay = callsValue != null ? String(callsValue) : '—';
+  const callsNote = callsValue != null && wp.based_on_averages ? '(team average)' : callsValue != null ? '(from closed deals)' : 'Insufficient data';
+
   const steps = [
-    { label: 'Speed to Contact', value: fmtTime(wp.avg_speed_to_contact_min), icon: '⚡' },
-    { label: 'Calls to Connect', value: wp.avg_calls_to_connect != null ? Math.round(wp.avg_calls_to_connect) : '—', icon: '📞' },
-    { label: 'Days to Appt', value: wp.avg_days_to_appointment != null ? Math.round(wp.avg_days_to_appointment) + 'd' : '—', icon: '📅' },
-    { label: 'Appts per Lender Ref', value: wp.avg_appts_to_lender != null ? wp.avg_appts_to_lender.toFixed(1) : '—', icon: '🏦' },
-    { label: 'Days to Close', value: wp.avg_days_lender_to_close != null ? Math.round(wp.avg_days_lender_to_close) + 'd' : '—', icon: '🏠' },
-    { label: 'Top Source', value: esc(wp.top_source_closed || '—'), icon: '🎯' },
+    { label: 'Speed to Contact', value: fmtTime(wp.avg_speed_to_contact_min), note: 'Industry best practice: under 5 min for internet leads', icon: '⚡' },
+    { label: 'Calls to Connect', value: callsDisplay, note: callsNote, icon: '📞' },
+    { label: 'Days to Appt', value: wp.avg_days_to_appointment != null ? Math.round(wp.avg_days_to_appointment) + 'd' : '—', note: wp.avg_days_to_appointment != null ? '(from first contact)' : '', icon: '📅' },
+    { label: 'Appts Before Lender', value: wp.avg_appts_to_lender != null ? wp.avg_appts_to_lender.toFixed(1) : '—', note: '', icon: '🏦' },
+    { label: 'Days to Close', value: wp.avg_days_lender_to_close != null ? Math.round(wp.avg_days_lender_to_close) + 'd' : '—', note: wp.avg_days_lender_to_close != null ? '(from lead creation)' : '', icon: '🏠' },
+    { label: 'Top Source', value: esc(wp.top_source_closed || '—'), note: wp.top_source_closed ? '(highest close rate)' : '', icon: '🎯' },
   ];
 
   const timelineHtml = steps.map((s, i) => {
@@ -269,15 +274,15 @@ function renderWinningPath(data) {
       <div class="timeline-dot">${s.icon}</div>
       <div class="timeline-value">${s.value}</div>
       <div class="timeline-label">${s.label}</div>
+      ${s.note ? `<div style="font-size:10px;color:var(--white-40);margin-top:2px">${s.note}</div>` : ''}
     </div>${connector}`;
   }).join('\n');
 
   return `<section class="section" id="winning-path">
   <h2 class="section-title">The Winning Path</h2>
-  <p class="section-subtitle">Here is what a Kenna closing looks like — based on ${wp.sample_size || 0} closed deals this period</p>
+  <p class="section-subtitle">Based on ${wp.sample_size || 0} closed deals this period — here is what a Kenna closing actually looks like</p>
   <div class="card">
     <div class="timeline">${timelineHtml}</div>
-    ${wp.based_on_averages ? '<p style="text-align:center;font-size:12px;color:var(--white-40);margin-top:8px">Some metrics based on team averages where individual deal data was limited</p>' : ''}
     ${narrative ? `<div class="insight-block"><img src="${esc(FROG_CTA)}" class="insight-frog" alt="">${narrative.split('\n').map(p => `<p>${esc(p)}</p>`).join('')}</div>` : ''}
   </div>
 </section>`;
@@ -451,22 +456,53 @@ function renderPipelineOpportunity(data) {
   const narrative = (data.insights && data.insights.pipelineOpportunity) || '';
 
   const buckets = [
-    { label: 'Never Contacted', count: p.never_contacted_count, value: p.never_contacted_value },
-    { label: 'Reached, No Appt', count: p.reached_no_appt_count, value: p.reached_no_appt_value },
-    { label: 'Appt, No Lender', count: p.appt_no_lender_count, value: p.appt_no_lender_value },
-    { label: 'Lender, Not Closed', count: p.lender_not_closed_count, value: p.lender_not_closed_value },
-    { label: 'Stale Leads', count: p.stale_leads_count, value: null },
+    {
+      count: p.never_contacted_count,
+      label: 'Never Contacted',
+      sublabel: 'no outbound attempt logged in FUB',
+      note: 'Agents may have called from personal phones which would not appear here',
+      color: 'var(--white-40)',
+    },
+    {
+      count: p.reached_no_appt_count,
+      label: 'Reached, No Appt',
+      sublabel: 'reached — no appointment set yet',
+      note: 'Normal for internet leads — most browsers do not become buyers',
+      color: 'var(--white-40)',
+    },
+    {
+      count: p.appt_no_lender_count,
+      label: 'Appt, No Lender',
+      sublabel: 'appointments — no lender referral yet',
+      note: 'These people showed up — qualified buyer signal',
+      color: 'var(--teal)',
+    },
+    {
+      count: p.lender_not_closed_count,
+      label: 'With Lender',
+      sublabel: 'with lender — not yet closed',
+      note: 'Hottest leads in the pipeline',
+      color: 'var(--green)',
+    },
+    {
+      count: p.stale_leads_count,
+      label: 'Stale Leads',
+      sublabel: 'no activity in 30+ days',
+      note: 'Worth a re-engagement attempt',
+      color: 'var(--amber)',
+    },
   ];
 
   const cards = buckets.map(b => `<div class="pipeline-card">
     <div class="pipeline-count">${fmt(b.count)}</div>
     <div class="pipeline-label">${b.label}</div>
-    ${b.value != null ? `<div class="pipeline-value">Est. ${fmtDollar(b.value)}</div>` : ''}
+    <div style="font-size:11px;color:${b.color};margin-top:4px">${b.sublabel}</div>
+    <div style="font-size:10px;color:var(--white-20);margin-top:6px;line-height:1.3">${b.note}</div>
   </div>`).join('\n');
 
   return `<section class="section" id="pipeline">
   <h2 class="section-title">Pipeline Opportunity Analysis</h2>
-  <p class="section-subtitle">Where are the next closings hiding?</p>
+  <p class="section-subtitle">Where your warmest opportunities are right now</p>
   <div class="pipeline-grid">${cards}</div>
   ${narrative ? `<div class="insight-block" style="margin-top:20px"><img src="${esc(FROG_CTA)}" class="insight-frog" alt="">${narrative.split('\n').map(p => `<p>${esc(p)}</p>`).join('')}</div>` : ''}
 </section>`;
