@@ -118,12 +118,11 @@ async function fetchAllData(config) {
   const users = usersResp.users || [];
   console.log(`  Fetched ${users.length} users`);
 
-  // 2. People — offset pagination with createdAfter
-  console.log('Pulling /people (offset pagination)...');
-  const people = await fetchOffset('/people', apiKey, {
-    sort: 'created',
-    createdAfter: cutoffStr
-  });
+  // 2. People — offset pagination, pull ALL (no date filter)
+  //    Need all active pipeline leads regardless of creation date.
+  //    Calls/appointments/deals are still filtered to 90-day window.
+  console.log('Pulling /people (all — no date filter)...');
+  const people = await fetchOffset('/people', apiKey, { sort: 'created' });
 
   // 3. Calls — cursor pagination ONLY (offset caps at 2000)
   //    dateAfter param does NOT work — pull ALL calls, filter locally
