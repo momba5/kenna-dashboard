@@ -276,7 +276,7 @@ async function start() {
   scheduleCron();
 
   app.listen(PORT, () => {
-    console.log(`Kenna Dashboard running on port ${PORT}`);
+    console.log(`Kenna Dashboard v1.1 running on port ${PORT}`);
     console.log(`Dashboard: http://localhost:${PORT}${BASE}`);
     console.log(`Login: http://localhost:${PORT}${BASE}/login`);
   });
