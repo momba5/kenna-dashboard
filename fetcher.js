@@ -183,6 +183,8 @@ function compute(users, people, calls, appointments, deals, config) {
   const targets = config.targets || {};
   const thresholds = config.thresholds || {};
   const isaRoleNames = (config.isa_role_names || []).map(r => r.toLowerCase());
+  const isaNames = (config.isa_names || []).map(n => n.toLowerCase());
+  const excludedUsers = (config.excluded_users || []).map(n => n.toLowerCase());
   const WEEKS = 13; // 90 days
   const EXCLUDED_SOURCES = ['my +plus leads', 'imported'];
   const RELATIONSHIP_SOURCES = ['sphere', 'referral', 'kenna lead', 'by agent',
@@ -191,18 +193,21 @@ function compute(users, people, calls, appointments, deals, config) {
   const staleDays = thresholds.stale_lead_days || 30;
 
   // ==================================================================
-  // 1. Build uidMap: userId → fullName
+  // 1. Build uidMap: userId → fullName (skip excluded users)
   // ==================================================================
   const uidMap = {};
   const agentMeta = {};
   for (const u of users) {
     const name = u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || `User ${u.id}`;
+    const nameLower = name.toLowerCase();
+    if (excludedUsers.includes(nameLower) || nameLower.includes('admin')) continue;
     uidMap[u.id] = name;
     const role = (u.role || '').toLowerCase();
     const title = (u.title || '').toLowerCase();
+    const forceIsa = isaNames.includes(nameLower);
     agentMeta[name] = {
       id: u.id,
-      is_isa: isaRoleNames.some(r => role.includes(r) || title.includes(r)),
+      is_isa: forceIsa || isaRoleNames.some(r => role.includes(r) || title.includes(r)),
       is_leader: role.includes('admin') || role.includes('owner'),
       email: u.email,
       role: u.role,
@@ -265,6 +270,8 @@ function compute(users, people, calls, appointments, deals, config) {
   const agents = {};
   function ensureAgent(name) {
     if (!name || agents[name]) return;
+    // Skip excluded users even if referenced in leads/calls/deals
+    if (excludedUsers.includes(name.toLowerCase()) || name.toLowerCase().includes('admin')) return;
     const meta = agentMeta[name] || { id: null, is_isa: false, is_leader: false, email: null, role: null };
     agents[name] = {
       id: meta.id, name, email: meta.email, role: meta.role,
@@ -302,6 +309,7 @@ function compute(users, people, calls, appointments, deals, config) {
     if (!agentName) continue;
     ensureAgent(agentName);
     const a = agents[agentName];
+    if (!a) continue;
 
     a.leads_assigned++;
     a.cleanLeadIds.add(p.id);
@@ -382,6 +390,7 @@ function compute(users, people, calls, appointments, deals, config) {
     if (!name) continue;
     ensureAgent(name);
     const a = agents[name];
+    if (!a) continue;
     if (c.isIncoming === false) {
       a.calls_outbound++;
       a.calls_this_week = (a.calls_this_week || 0) + (new Date(c.created).getTime() >= weekAgoMs ? 1 : 0);
@@ -401,6 +410,7 @@ function compute(users, people, calls, appointments, deals, config) {
     const name = uidMap[ap.createdById];
     if (!name) continue;
     ensureAgent(name);
+    if (!agents[name]) continue;
     agents[name].appointments_set++;
   }
 
@@ -434,6 +444,7 @@ function compute(users, people, calls, appointments, deals, config) {
     const name = du.name;
     ensureAgent(name);
     const a = agents[name];
+    if (!a) continue;
 
     const sn = (d.stageName || '').toLowerCase();
     const isClosed = sn.includes('closed') || sn.includes('close');
@@ -570,6 +581,8 @@ function compute(users, people, calls, appointments, deals, config) {
     delete a._lead_speeds; delete a._source_data; delete a._closed_journeys;
     delete a.cleanLeadIds; delete a.calls_this_week; delete a.stages;
 
+    // Skip agents with zero leads AND zero calls (ghost/inactive accounts)
+    if (a.leads_assigned === 0 && a.calls_outbound === 0) continue;
     agentList.push(a);
   }
 

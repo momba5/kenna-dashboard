@@ -20,5 +20,14 @@
   },
   "refresh_schedule": "0 6 * * 1",
   "isa_role_names": ["ISA", "Inside Sales", "Inside Sales Agent"],
+  "isa_names": ["Felicia Carter"],
+  "excluded_users": [
+    "Follow Up Boss",
+    "Mike Oswald",
+    "Mike Oswald Admin",
+    "Emily Henry",
+    "Bruce McConnell",
+    "Brian Burke"
+  ],
   "migration_date": "2025-07-01"
 }
