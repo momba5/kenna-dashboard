@@ -213,6 +213,7 @@ function renderHealthSnapshot(data, config) {
     : 0;
 
   return `<section class="section" id="health">
+  <p class="section-label">System Health</p>
   <h2 class="section-title">Business Health Snapshot</h2>
   <p class="section-subtitle">The numbers that tell you if the business is healthy</p>
   <div class="kpi-grid">
@@ -269,6 +270,7 @@ function renderTeamTrends(data) {
   const trend = data.teamTrend;
   if (!trend || trend.length < 2) {
     return `<section class="section" id="trends">
+    <p class="section-label">Historical</p>
     <h2 class="section-title">Weekly Trends</h2>
     <p class="section-subtitle" style="color:var(--white-20)">Trend data builds over time — check back after next Monday refresh</p>
   </section>`;
@@ -359,6 +361,7 @@ function renderWinningPath(data) {
   }).join('\n');
 
   return `<section class="section" id="winning-path">
+  <p class="section-label">Deal Intelligence</p>
   <h2 class="section-title">The Winning Path</h2>
   <p class="section-subtitle">Based on ${wp.sample_size || 0} closed deals this period — here is what a Kenna closing actually looks like</p>
   <div class="card">
@@ -446,6 +449,7 @@ function renderFunnelSection(data, config) {
     }).join('\n');
 
   return `<section class="section" id="funnel">
+  <p class="section-label">Conversion Engine</p>
   <h2 class="section-title">Funnel & Law of Averages</h2>
   <p class="section-subtitle">Your conversion engine — from lead to closing table</p>
 
@@ -512,6 +516,7 @@ function renderSourceMatrix(data) {
   }).join('\n');
 
   return `<section class="section" id="sources">
+  <p class="section-label">Source Intelligence</p>
   <h2 class="section-title">Source Quality Matrix</h2>
   <p class="section-subtitle">The view FUB cannot show — source performance by outcome, not just volume</p>
   <div class="card">
@@ -581,6 +586,7 @@ function renderPipelineOpportunity(data) {
   </div>`).join('\n');
 
   return `<section class="section" id="pipeline">
+  <p class="section-label">Pipeline</p>
   <h2 class="section-title">Pipeline Opportunity Analysis</h2>
   <p class="section-subtitle">Where your warmest opportunities are right now</p>
   <div class="pipeline-grid">${cards}</div>
@@ -605,6 +611,7 @@ function renderAgentScorecards(data, config) {
   const cards = sorted.map(agent => renderAgentCard(agent, data, targets)).join('\n');
 
   return `<section class="section" id="agents">
+  <p class="section-label">Agent Profiles</p>
   <h2 class="section-title">Agent Scorecards</h2>
   <p class="section-subtitle">Individual performance — every metric computed from live FUB data</p>
   <div class="agent-grid">${cards}</div>
@@ -762,6 +769,7 @@ function renderAnomalies(data) {
   </div>`).join('\n');
 
   return `<section class="section" id="anomalies">
+  <p class="section-label">Pattern Detection</p>
   <h2 class="section-title">Anomaly Spotlight</h2>
   <p class="section-subtitle">Unusual patterns worth your attention — framed as opportunities</p>
   <div style="display:grid;gap:16px">${cards}</div>
@@ -781,6 +789,7 @@ function renderCoachingPriorities(data) {
   </div>`).join('\n');
 
   return `<section class="section" id="coaching">
+  <p class="section-label">Action Items</p>
   <h2 class="section-title">Coaching Priorities</h2>
   <p class="section-subtitle">Your top 5 opportunities this week, ranked by estimated revenue impact</p>
   <div style="display:grid;gap:16px">${cards}</div>
@@ -802,6 +811,7 @@ function renderReminders(reminders) {
   </div>`).join('\n');
 
   return `<section class="section" id="reminders">
+  <p class="section-label">Team Notes</p>
   <h2 class="section-title">Team Reminders</h2>
   <p class="section-subtitle">Notes from Brian</p>
   <div class="reminder-grid">${cards}</div>
