@@ -1,110 +1,223 @@
-/* Kenna Real Estate Group — Login Page */
+/* KRG Intel — Login Screen */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: 'Inter', sans-serif;
-  background: #1d2c35;
+  background: #020308;
+  color: #E8ECF4;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* Ambient background pulse */
+.login-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.login-bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: orb-drift 8s cubic-bezier(0.45, 0, 0.35, 1) infinite;
+}
+.login-bg-orb--cyan {
+  width: min(38vw, 280px);
+  height: min(38vw, 280px);
+  left: 15%;
+  top: 18%;
+  background: rgba(34, 211, 238, 0.03);
+}
+.login-bg-orb--teal {
+  width: min(28vw, 200px);
+  height: min(28vw, 200px);
+  right: 20%;
+  bottom: 22%;
+  background: rgba(45, 212, 191, 0.02);
+  animation-delay: -4s;
+  animation-duration: 10s;
+}
+
+@keyframes orb-drift {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+/* Scan line — very subtle */
+.login-bg-scan {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255,255,255,0.008) 2px,
+    rgba(255,255,255,0.008) 4px
+  );
+  pointer-events: none;
+}
+
+/* Container */
 .login-container {
+  position: relative;
+  z-index: 1;
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   padding: 20px;
 }
 
+/* Card */
 .login-card {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(165deg, rgba(10,14,20,0.65) 0%, rgba(4,6,10,0.75) 100%);
+  border: 1px solid rgba(255,255,255,0.07);
   border-radius: 16px;
-  padding: 48px 40px;
+  padding: 48px 36px 40px;
   text-align: center;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 24px 72px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+  position: relative;
+  overflow: hidden;
 }
 
+/* Top edge seam — signature KRG Intel treatment */
+.login-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 5%,
+    rgba(45, 212, 191, 0.4) 25%,
+    rgba(34, 211, 238, 0.6) 50%,
+    rgba(45, 212, 191, 0.4) 75%,
+    transparent 95%
+  );
+  opacity: 0.7;
+  animation: seam-breathe 6s cubic-bezier(0.45, 0, 0.35, 1) infinite;
+}
+
+@keyframes seam-breathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.85; }
+}
+
+/* Logo */
 .login-logo {
-  max-width: 220px;
-  margin-bottom: 32px;
+  max-width: 180px;
+  margin-bottom: 14px;
+  filter: drop-shadow(0 0 24px rgba(34, 211, 238, 0.08));
 }
 
-.login-title {
-  color: #ffffff;
-  font-size: 20px;
+/* Platform label */
+.login-platform {
+  font-size: 0.6rem;
   font-weight: 700;
-  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.35em;
+  color: rgba(34, 211, 238, 0.55);
+  margin-bottom: 36px;
 }
 
+/* Title */
+.login-title {
+  color: #E8ECF4;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+/* Subtitle */
 .login-subtitle {
-  color: rgba(255,255,255,0.5);
-  font-size: 14px;
-  margin-bottom: 32px;
+  color: #7d8b9e;
+  font-size: 13px;
+  margin-bottom: 28px;
 }
 
+/* Form */
 .login-form { width: 100%; }
 
+/* Input */
 .login-input {
   width: 100%;
   padding: 14px 16px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
   border-radius: 10px;
-  color: #ffffff;
+  color: #E8ECF4;
   font-family: 'Inter', sans-serif;
-  font-size: 15px;
+  font-size: 14px;
+  letter-spacing: 0.02em;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
 .login-input::placeholder {
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.25);
+  letter-spacing: 0.03em;
 }
 
 .login-input:focus {
-  border-color: #039ba9;
-  box-shadow: 0 0 0 3px rgba(3,155,169,0.15);
+  border-color: rgba(34, 211, 238, 0.4);
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.08), 0 0 16px rgba(34, 211, 238, 0.06);
 }
 
+/* Button */
 .login-button {
   width: 100%;
-  margin-top: 16px;
+  margin-top: 14px;
   padding: 14px;
-  background: #039ba9;
+  background: linear-gradient(135deg, #039ba9 0%, #028a96 100%);
   color: #ffffff;
   font-family: 'Inter', sans-serif;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.3s;
+  box-shadow: 0 4px 16px rgba(3, 155, 169, 0.15);
 }
 
 .login-button:hover {
-  background: #02838f;
+  background: linear-gradient(135deg, #03a8b8 0%, #039ba9 100%);
+  box-shadow: 0 4px 24px rgba(3, 155, 169, 0.25);
 }
 
 .login-button:active {
   transform: scale(0.98);
 }
 
+/* Error — amber, not harsh red */
 .login-error {
   margin-top: 16px;
-  padding: 12px 16px;
-  background: rgba(239,159,39,0.1);
-  border: 1px solid rgba(239,159,39,0.3);
+  padding: 11px 16px;
+  background: rgba(239, 159, 39, 0.07);
+  border: 1px solid rgba(239, 159, 39, 0.2);
   border-radius: 8px;
-  color: #ef9f27;
-  font-size: 13px;
-  line-height: 1.4;
+  color: #d4922a;
+  font-size: 12.5px;
+  line-height: 1.5;
 }
 
+/* Footer */
 .login-footer {
-  margin-top: 24px;
-  color: rgba(255,255,255,0.25);
-  font-size: 12px;
+  margin-top: 28px;
+  color: rgba(255,255,255,0.18);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
 }

@@ -1,5 +1,5 @@
 const BASE = ''; // root-mounted (was /fub-insights)
-const LOGO = 'https://yourbrand.io/wp-content/uploads/2026/03/kenna-logo-2-scaled.png';
+const LOGO = 'https://momba5.github.io/krgintel-assets/KRG-intel-logo.png';
 const BADGE_ICON = 'https://yourbrand.io/wp-content/uploads/2026/03/achievement-2.png';
 const FROG_CTA = 'https://yourbrand.io/wp-content/uploads/2026/03/kenna-frog-CTA.png';
 
@@ -78,21 +78,27 @@ function renderLogin(error) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kenna Real Estate Group — Dashboard Login</title>
+  <title>KRG Intel — Login</title>
   <link rel="stylesheet" href="${BASE}/public/login.css">
 </head>
 <body>
+  <div class="login-bg" aria-hidden="true">
+    <div class="login-bg-orb login-bg-orb--cyan"></div>
+    <div class="login-bg-orb login-bg-orb--teal"></div>
+    <div class="login-bg-scan"></div>
+  </div>
   <div class="login-container">
     <div class="login-card">
-      <img src="${esc(LOGO)}" alt="Kenna Real Estate Group" class="login-logo">
-      <h1 class="login-title">Team Performance Dashboard</h1>
+      <img src="${esc(LOGO)}" alt="KRG Intel" class="login-logo">
+      <p class="login-platform">Intelligence Platform</p>
+      <h1 class="login-title">Team Performance</h1>
       <p class="login-subtitle">Enter your password to continue</p>
       <form class="login-form" method="POST" action="${BASE}/login">
         <input type="password" name="password" class="login-input" placeholder="Password" autofocus required>
         <button type="submit" class="login-button">Sign In</button>
       </form>
       ${error ? `<div class="login-error">${esc(error)}</div>` : ''}
-      <p class="login-footer">Kenna Real Estate Group &copy; ${new Date().getFullYear()}</p>
+      <p class="login-footer">KRG Intel &middot; Kenna Real Estate Group</p>
     </div>
   </div>
 </body>
