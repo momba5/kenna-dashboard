@@ -152,28 +152,35 @@ function renderShell(body, config, refreshState) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kenna Real Estate Group — Team Performance Dashboard</title>
+  <title>KRG Intel — Team Performance</title>
   <link rel="stylesheet" href="${BASE}/public/dashboard.css">
 </head>
 <body>
-  <div class="header">
-    <img src="${esc(LOGO)}" alt="Kenna" class="header-logo">
-    <span class="header-title">Team Performance Dashboard</span>
-    <span class="header-meta">Last refreshed ${esc(lastRefresh)}<br>Next refresh Monday 6am</span>
-  </div>
   ${staleBanner}
   <nav class="nav">
-    <a href="#health">Health</a>
-    <a href="#trends">Trends</a>
-    <a href="#winning-path">Winning Path</a>
-    <a href="#funnel">Funnel</a>
-    <a href="#sources">Sources</a>
-    <a href="#pipeline">Pipeline</a>
-    <a href="#agents">Agents</a>
-    <a href="#anomalies">Anomalies</a>
-    <a href="#coaching">Coaching</a>
-    <a href="#reminders">Reminders</a>
-    <a href="${BASE}/logout" style="margin-left:auto;color:var(--white-40);">Logout</a>
+    <div class="nav-left">
+      <a href="https://krgintel.com" class="nav-portal">&larr; Portal</a>
+      <img src="${esc(LOGO)}" alt="KRG Intel" class="nav-logo">
+      <span class="nav-brand">KRG Intel</span>
+      <span class="nav-sep"></span>
+      <span class="nav-context">Team Performance</span>
+    </div>
+    <div class="nav-center">
+      <a href="#health">Health</a>
+      <a href="#trends">Trends</a>
+      <a href="#winning-path">Winning Path</a>
+      <a href="#funnel">Funnel</a>
+      <a href="#sources">Sources</a>
+      <a href="#pipeline">Pipeline</a>
+      <a href="#agents">Agents</a>
+      <a href="#anomalies">Anomalies</a>
+      <a href="#coaching">Coaching</a>
+      <a href="#reminders">Reminders</a>
+    </div>
+    <div class="nav-right">
+      <span class="nav-meta">Refreshed ${esc(lastRefresh)}</span>
+      <a href="${BASE}/logout" class="nav-logout">Logout</a>
+    </div>
   </nav>
   <div class="container">
     ${body}
